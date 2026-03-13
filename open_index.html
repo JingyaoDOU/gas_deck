@@ -114,12 +114,11 @@
       position: absolute;
       left: 50%;
       top: 52%;
-      width: min(78vw, 78vh, 820px);
+      width: min(84vw, 84vh, 920px);
       aspect-ratio: 1;
       transform: translate(-50%, -50%);
       z-index: 2;
-      border-radius: 50%;
-      overflow: hidden;
+      overflow: visible;
     }
 
     #orb-canvas {
@@ -128,7 +127,7 @@
       width: 100%;
       height: 100%;
       display: block;
-      filter: drop-shadow(0 24px 40px rgba(124, 58, 237, 0.12));
+      pointer-events: none;
     }
 
     #orb-copy {
@@ -194,7 +193,7 @@
     #part-grid {
       position: absolute;
       left: 50%;
-      bottom: 8.5%;
+      bottom: 12%;
       width: min(78%, 540px);
       transform: translateX(-50%);
       display: grid;
@@ -275,7 +274,7 @@
 
     @media (max-width: 900px) {
       #orb-shell {
-        width: min(92vw, 92vh, 720px);
+        width: min(98vw, 98vh, 780px);
         top: 54%;
       }
 
@@ -291,7 +290,7 @@
 
       #part-grid {
         width: min(80%, 470px);
-        bottom: 8%;
+        bottom: 10%;
       }
     }
 
@@ -306,7 +305,7 @@
       #label-tr { right: 18px; }
 
       #orb-shell {
-        width: min(96vw, 96vh);
+        width: min(104vw, 104vh);
         top: 55%;
       }
 
@@ -333,7 +332,7 @@
         width: min(76%, 320px);
         grid-template-columns: 1fr;
         gap: 10px;
-        bottom: 8%;
+        bottom: 9.5%;
       }
 
       .part-card {
@@ -554,13 +553,15 @@
         lightCol = clamp(lightCol, 0.0, 1.0);
 
         vec3 finalCol = mix(darkCol, lightCol, bgLuminance);
-        return extractAlpha(finalCol);
+        float ringMask = smoothstep(0.42, 0.68, len) * (1.0 - smoothstep(1.02, 1.18, len));
+        float alpha = clamp(v0 * 1.65 + v1 * 0.30, 0.0, 1.0) * ringMask;
+        return vec4(finalCol, alpha);
       }
 
       vec4 mainImage(vec2 fragCoord) {
         vec2 center = iResolution.xy * 0.5;
         float size = min(iResolution.x, iResolution.y);
-        vec2 uv = (fragCoord - center) / size * 2.0;
+        vec2 uv = (fragCoord - center) / size * 1.76;
 
         float angle = rot;
         float s = sin(angle);
