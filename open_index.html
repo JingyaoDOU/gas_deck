@@ -515,7 +515,7 @@
       vec4 mainImage(vec2 fragCoord) {
         vec2 center = iResolution.xy * 0.5;
         float size = min(iResolution.x, iResolution.y);
-        vec2 uv = (fragCoord - center) / size * 4.7916667;
+        vec2 uv = (fragCoord - center) / size * 4.1666667;
 
         float angle = rot;
         float s = sin(angle);
