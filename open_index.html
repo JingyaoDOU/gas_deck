@@ -125,8 +125,8 @@
       position: fixed;
       left: 50%;
       top: 52%;
-      width: max(132vw, 132vh);
-      height: max(132vw, 132vh);
+      width: max(105.6vw, 105.6vh);
+      height: max(105.6vw, 105.6vh);
       transform: translate(-50%, -50%);
       display: block;
       pointer-events: none;
@@ -515,7 +515,7 @@
       vec4 mainImage(vec2 fragCoord) {
         vec2 center = iResolution.xy * 0.5;
         float size = min(iResolution.x, iResolution.y);
-        vec2 uv = (fragCoord - center) / size * 2.3;
+        vec2 uv = (fragCoord - center) / size * 2.875;
 
         float angle = rot;
         float s = sin(angle);
