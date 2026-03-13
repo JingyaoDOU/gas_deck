@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>人工智能在气田开发中的应用｜开场页</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230f766e'/%3E%3Cpath d='M15 37c9-9 18-12 28-12 3 0 6 .3 9 .8-7 1.7-15 6.2-22 14l-3 3H15z' fill='%23ffffff'/%3E%3Ccircle cx='44' cy='20' r='5' fill='%235a6ff2'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #f4f1eb;
+      --bg-soft: #fbf8f2;
+      --ink: #191514;
+      --ink-soft: rgba(25, 21, 20, 0.58);
+      --line: rgba(25, 21, 20, 0.08);
+      --line-strong: rgba(25, 21, 20, 0.12);
+      --accent-1: #0f766e;
+      --accent-2: #4f67d8;
+      --accent-3: #9c6443;
+      --accent-4: #6c5a86;
+      --shadow: 0 30px 90px rgba(23, 19, 16, 0.08);
+      --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(15, 118, 110, 0.08), transparent 18%),
+        radial-gradient(circle at 82% 22%, rgba(79, 103, 216, 0.08), transparent 18%),
+        linear-gradient(180deg, var(--bg-soft), var(--bg));
+    }
+
+    .shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      isolation: isolate;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.48), rgba(255,255,255,0.08) 30%, transparent 56%),
+        linear-gradient(180deg, rgba(255,255,255,0.24), transparent 26%);
+    }
+
+    #glCanvas,
+    .fallback-visual,
+    .atmosphere,
+    .grain {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+
+    #glCanvas,
+    .fallback-visual { z-index: 1; }
+    .atmosphere,
+    .grain { z-index: 2; }
+
+    .atmosphere {
+      background:
+        radial-gradient(circle at 67% 44%, rgba(255,255,255,0.38), transparent 20%),
+        radial-gradient(circle at 69% 47%, rgba(15, 118, 110, 0.06), transparent 26%),
+        radial-gradient(circle at 74% 54%, rgba(79, 103, 216, 0.05), transparent 20%);
+      mix-blend-mode: screen;
+    }
+
+    .grain {
+      opacity: 0.16;
+      background-image:
+        radial-gradient(circle at 18% 20%, rgba(0,0,0,0.09) 0 0.8px, transparent 1px),
+        radial-gradient(circle at 76% 42%, rgba(0,0,0,0.06) 0 0.8px, transparent 1px),
+        radial-gradient(circle at 42% 78%, rgba(0,0,0,0.05) 0 0.7px, transparent 1px);
+      background-size: 160px 160px, 220px 220px, 180px 180px;
+      mix-blend-mode: multiply;
+    }
+
+    .fallback-visual {
+      display: none;
+      background:
+        radial-gradient(circle at 64% 46%, rgba(33, 28, 24, 0.28), transparent 8%),
+        radial-gradient(circle at 74% 32%, rgba(15, 118, 110, 0.14), transparent 13%),
+        radial-gradient(circle at 78% 42%, rgba(79, 103, 216, 0.16), transparent 14%),
+        radial-gradient(circle at 78% 55%, rgba(156, 100, 67, 0.14), transparent 14%),
+        radial-gradient(circle at 72% 68%, rgba(108, 90, 134, 0.12), transparent 13%);
+    }
+
+    body.no-webgl .fallback-visual { display: block; }
+
+    .content {
+      position: relative;
+      z-index: 4;
+      width: min(42rem, 46vw);
+      height: 100%;
+      display: grid;
+      align-content: space-between;
+      padding: clamp(2rem, 4vw, 3.5rem);
+    }
+
+    .content::before {
+      content: "";
+      position: absolute;
+      inset: clamp(1rem, 3vw, 1.5rem) 0 clamp(1rem, 3vw, 1.5rem) 0;
+      border-radius: 2rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.34));
+      border: 1px solid rgba(255,255,255,0.26);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      z-index: -1;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,1), rgba(0,0,0,0.82) 60%, rgba(0,0,0,0.6));
+    }
+
+    .title-block {
+      padding-top: clamp(1.8rem, 7vh, 5rem);
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.8rem, 5vw, 4.9rem);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+      max-width: none;
+    }
+
+    .title-line {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .title-highlight {
+      display: block;
+      margin-top: 0.22em;
+      font-size: 0.44em;
+      letter-spacing: -0.02em;
+      background: linear-gradient(120deg, var(--accent-1), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .menu {
+      display: grid;
+      gap: 0.82rem;
+      padding-bottom: clamp(1rem, 4vh, 2rem);
+    }
+
+    .menu-item {
+      appearance: none;
+      width: 100%;
+      border: 0;
+      padding: 0.96rem 0 0.98rem;
+      background: transparent;
+      text-align: left;
+      color: inherit;
+      cursor: default;
+      border-top: 1px solid var(--line);
+      transition: transform 0.26s ease, border-color 0.26s ease, opacity 0.26s ease;
+    }
+
+    .menu-item[data-target] {
+      cursor: pointer;
+    }
+
+    .menu-item:last-child {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .menu-item:hover,
+    .menu-item:focus-visible {
+      transform: translateX(8px);
+      border-color: var(--line-strong);
+      outline: none;
+    }
+
+    .menu-item__row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.95rem;
+      align-items: start;
+    }
+
+    .menu-item__index {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.52rem;
+      min-width: 3.6rem;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .menu-item__index::before {
+      content: "";
+      display: inline-block;
+      width: 1.35rem;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--branch, var(--ink));
+      box-shadow: 0 0 18px color-mix(in srgb, var(--branch, var(--ink)) 32%, transparent);
+    }
+
+    .menu-item__copy strong {
+      display: block;
+      margin-bottom: 0.18rem;
+      font-size: clamp(1rem, 1.08vw, 1.06rem);
+      font-weight: 700;
+    }
+
+    .menu-item__copy span {
+      display: block;
+      color: var(--ink-soft);
+      font-size: clamp(0.78rem, 0.9vw, 0.88rem);
+      line-height: 1.58;
+    }
+
+    .branch-1 { --branch: var(--accent-1); }
+    .branch-2 { --branch: var(--accent-2); }
+    .branch-3 { --branch: var(--accent-3); }
+    .branch-4 { --branch: var(--accent-4); }
+
+    @media (max-width: 1100px) {
+      .content {
+        width: min(40rem, 54vw);
+      }
+    }
+
+    @media (max-width: 820px) {
+      body { overflow: auto; }
+      .shell { min-height: 100dvh; }
+      .content {
+        width: min(100%, 42rem);
+        min-height: 100dvh;
+      }
+      h1 { font-size: clamp(2.8rem, 14vw, 4.5rem); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <canvas id="glCanvas" aria-hidden="true"></canvas>
+    <div class="fallback-visual" aria-hidden="true"></div>
+    <div class="atmosphere" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <main class="content">
+      <section class="title-block">
+        <h1><span class="title-line">人工智能</span><span class="title-line">在气田开发中的应用</span><span class="title-highlight">AI+气开发</span></h1>
+      </section>
+
+      <nav class="menu" aria-label="presentation outline">
+        <button class="menu-item branch-1" type="button" data-branch="1" data-target="index.html">
+          <span class="menu-item__row">
+            <span class="menu-item__index">01</span>
+            <span class="menu-item__copy">
+              <strong>人工智能发展概览</strong>
+              <span>建立对 AI 演进、大模型与智能体的整体认识。</span>
+            </span>
+          </span>
+        </button>
+        <button class="menu-item branch-2" type="button" data-branch="2" data-target="../part2/index.html">
+          <span class="menu-item__row">
+            <span class="menu-item__index">02</span>
+            <span class="menu-item__copy">
+              <strong>地球物理 / 地质建模中的 AI</strong>
+              <span>关注地下结构解释、表征、建模与不确定性认知。</span>
+            </span>
+          </span>
+        </button>
+        <button class="menu-item branch-3" type="button" data-branch="3" data-target="../part3/pinn_slides.html">
+          <span class="menu-item__row">
+            <span class="menu-item__index">03</span>
+            <span class="menu-item__copy">
+              <strong>油藏数值模拟中的 AI</strong>
+              <span>围绕代理模型、历史拟合、优化与模拟提速展开。</span>
+            </span>
+          </span>
+        </button>
+        <button class="menu-item branch-4" type="button" data-branch="4">
+          <span class="menu-item__row">
+            <span class="menu-item__index">04</span>
+            <span class="menu-item__copy">
+              <strong>日常工作中的 AI 落地与挑战</strong>
+              <span>讨论知识库、自动化流程、组织治理与实施边界。</span>
+            </span>
+          </span>
+        </button>
+      </nav>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('glCanvas');
+      const menuItems = Array.from(document.querySelectorAll('.menu-item'));
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const PARTICLE_COUNT = reducedMotion ? 3200 : 6800;
+      const branchPalette = {
+        0: [0.10, 0.10, 0.11],
+        1: [0.10, 0.43, 0.41],
+        2: [0.32, 0.41, 0.78],
+        3: [0.60, 0.39, 0.28],
+        4: [0.39, 0.33, 0.50]
+      };
+
+      let gl = null;
+      let program = null;
+      let attribs = null;
+      let uniforms = null;
+      let rafId = null;
+      let assembled = false;
+      let entered = false;
+      let hoverBranch = 0;
+      let navigationTimer = null;
+      let startTime = performance.now();
+      let assembleTime = null;
+      let current = null;
+      let target = null;
+      let home = null;
+      let velocity = null;
+      let sizes = null;
+      let colors = null;
+      let branches = null;
+      let posBuffer = null;
+      let sizeBuffer = null;
+      let colorBuffer = null;
+      let branchBuffer = null;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const pointer = { x: 0, y: 0, moved: false, lastClientX: null, lastClientY: null };
+
+      const branchDefs = [
+        { id: 0, p0: [-0.92, -0.34, 0.28], p1: [-0.16, -0.14, 0.16], p2: [0.44, -0.04, 0.04], w0: 0.22, w1: 0.10 },
+        { id: 1, p0: [0.28, 0.00, 0.04], p1: [0.80, 0.20, -0.02], p2: [1.46, 0.92, -0.28], w0: 0.12, w1: 0.028 },
+        { id: 2, p0: [0.30, -0.02, 0.05], p1: [0.92, 0.08, -0.02], p2: [1.78, 0.42, -0.14], w0: 0.11, w1: 0.028 },
+        { id: 3, p0: [0.33, -0.04, 0.06], p1: [0.98, -0.02, 0.08], p2: [1.76, -0.18, 0.12], w0: 0.10, w1: 0.026 },
+        { id: 4, p0: [0.26, -0.08, 0.08], p1: [0.80, -0.30, 0.16], p2: [1.48, -0.84, 0.30], w0: 0.12, w1: 0.03 }
+      ];
+
+      function rnd(min, max) { return min + Math.random() * (max - min); }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+      function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+      function randn() {
+        let u = 0, v = 0;
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      }
+
+      function bezier3(p0, p1, p2, t) {
+        const mt = 1 - t;
+        return [
+          mt * mt * p0[0] + 2 * mt * t * p1[0] + t * t * p2[0],
+          mt * mt * p0[1] + 2 * mt * t * p1[1] + t * t * p2[1],
+          mt * mt * p0[2] + 2 * mt * t * p1[2] + t * t * p2[2]
+        ];
+      }
+
+      function bezier3Tangent(p0, p1, p2, t) {
+        return [
+          2 * (1 - t) * (p1[0] - p0[0]) + 2 * t * (p2[0] - p1[0]),
+          2 * (1 - t) * (p1[1] - p0[1]) + 2 * t * (p2[1] - p1[1]),
+          2 * (1 - t) * (p1[2] - p0[2]) + 2 * t * (p2[2] - p1[2])
+        ];
+      }
+
+      function generateTargetState(count) {
+        const positions = new Float32Array(count * 3);
+        const branchIndex = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+          const mode = Math.random();
+          let branch = 0;
+          let curve = branchDefs[0];
+          let t = 0;
+          let x = 0;
+          let y = 0;
+          let z = 0;
+
+          if (mode < 0.32) {
+            curve = branchDefs[0];
+            branch = 0;
+            t = Math.pow(Math.random(), 0.88);
+          } else {
+            branch = 1 + Math.floor(Math.random() * 4);
+            curve = branchDefs[branch];
+            t = Math.pow(Math.random(), 0.78);
+          }
+
+          const pt = bezier3(curve.p0, curve.p1, curve.p2, t);
+          const tan = bezier3Tangent(curve.p0, curve.p1, curve.p2, t);
+          const len = Math.hypot(tan[0], tan[1]) || 1;
+          const nx = -tan[1] / len;
+          const ny = tan[0] / len;
+          const width = lerp(curve.w0, curve.w1, t) * (0.42 + Math.random() * 0.48);
+          const spread = clamp(randn(), -1.7, 1.7) * width;
+          const depth = clamp(randn(), -1.8, 1.8) * width * 0.5;
+
+          x = pt[0] + nx * spread;
+          y = pt[1] + ny * spread;
+          z = pt[2] + depth;
+
+          if (Math.random() > 0.92) {
+            x += nx * width * 0.9;
+            y += ny * width * 0.9;
+            z += depth * 0.35;
+          }
+
+          if (mode > 0.84 && mode < 0.9) {
+            x = 0.3 + randn() * 0.10;
+            y = -0.02 + randn() * 0.08;
+            z = 0.04 + randn() * 0.05;
+            branch = 0;
+          }
+
+          positions[i * 3] = x;
+          positions[i * 3 + 1] = y;
+          positions[i * 3 + 2] = z;
+          branchIndex[i] = branch;
+        }
+
+        return { positions, branchIndex };
+      }
+
+      function generateScatterPositions(count) {
+        const out = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const cluster = Math.random();
+          let x = rnd(-2.8, 2.8);
+          let y = rnd(-1.9, 1.9);
+          let z = rnd(-1.8, 2.2);
+
+          if (cluster < 0.33) {
+            x += rnd(-0.6, 0.3);
+            y += rnd(-0.2, 0.2);
+          } else if (cluster < 0.66) {
+            x += rnd(0.2, 1.0);
+            y += rnd(-0.4, 0.4);
+          }
+
+          out[i * 3] = x;
+          out[i * 3 + 1] = y;
+          out[i * 3 + 2] = z;
+        }
+        return out;
+      }
+
+      function generateColors(branchIndex) {
+        const out = new Float32Array(branchIndex.length * 3);
+        for (let i = 0; i < branchIndex.length; i++) {
+          const base = branchPalette[branchIndex[i]] || branchPalette[0];
+          const lift = rnd(-0.04, 0.05);
+          out[i * 3] = clamp(base[0] + lift, 0, 1);
+          out[i * 3 + 1] = clamp(base[1] + lift, 0, 1);
+          out[i * 3 + 2] = clamp(base[2] + lift, 0, 1);
+        }
+        return out;
+      }
+
+      function generateSizes(branchIndex) {
+        const out = new Float32Array(branchIndex.length);
+        for (let i = 0; i < branchIndex.length; i++) {
+          const branch = branchIndex[i];
+          const nearCore = branch === 0;
+          const strong = Math.random() > 0.9;
+          if (nearCore) {
+            out[i] = strong ? rnd(5.8, 8.8) : rnd(2.8, 5.2);
+          } else {
+            out[i] = strong ? rnd(4.8, 7.0) : rnd(2.0, 4.4);
+          }
+        }
+        return out;
+      }
+
+      function createShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          throw new Error(gl.getShaderInfoLog(shader) || 'Shader compile failed');
+        }
+        return shader;
+      }
+
+      function createProgram(vsSource, fsSource) {
+        const vs = createShader(gl.VERTEX_SHADER, vsSource);
+        const fs = createShader(gl.FRAGMENT_SHADER, fsSource);
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+          throw new Error(gl.getProgramInfoLog(prog) || 'Program link failed');
+        }
+        gl.deleteShader(vs);
+        gl.deleteShader(fs);
+        return prog;
+      }
+
+      function getProgress(time) {
+        if (!assembled) return 0;
+        if (reducedMotion || assembleTime === null) return 1;
+        return easeOutCubic(clamp((time - assembleTime) / 2600, 0, 1));
+      }
+
+      function triggerAssemble() {
+        if (assembled) return;
+        assembled = true;
+        assembleTime = performance.now();
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          velocity[i3] += (target[i3] - current[i3]) * rnd(0.03, 0.055);
+          velocity[i3 + 1] += (target[i3 + 1] - current[i3 + 1]) * rnd(0.03, 0.055);
+          velocity[i3 + 2] += (target[i3 + 2] - current[i3 + 2]) * rnd(0.03, 0.055);
+        }
+      }
+
+      function queueNavigation(href, immediate = false) {
+        if (!href) return;
+        if (navigationTimer !== null) {
+          window.clearTimeout(navigationTimer);
+        }
+        const delay = immediate || reducedMotion ? 140 : 920;
+        navigationTimer = window.setTimeout(() => {
+          window.location.href = href;
+        }, delay);
+      }
+
+      function resize() {
+        const w = Math.floor(window.innerWidth * dpr);
+        const h = Math.floor(window.innerHeight * dpr);
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        if (gl) gl.viewport(0, 0, w, h);
+      }
+
+      function initState() {
+        const targetState = generateTargetState(PARTICLE_COUNT);
+        target = targetState.positions;
+        branches = targetState.branchIndex;
+        home = generateScatterPositions(PARTICLE_COUNT);
+        current = new Float32Array(home);
+        velocity = new Float32Array(PARTICLE_COUNT * 3);
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          velocity[i3] = rnd(-0.01, 0.01);
+          velocity[i3 + 1] = rnd(-0.01, 0.01);
+          velocity[i3 + 2] = rnd(-0.008, 0.008);
+        }
+        sizes = generateSizes(branches);
+        colors = generateColors(branches);
+      }
+
+      function initGL() {
+        gl = canvas.getContext('webgl', {
+          alpha: true,
+          antialias: true,
+          depth: false,
+          stencil: false,
+          premultipliedAlpha: true,
+          preserveDrawingBuffer: false,
+          powerPreference: 'high-performance'
+        });
+
+        if (!gl) {
+          document.body.classList.add('no-webgl');
+          return false;
+        }
+
+        const vsSource = `
+          attribute vec3 aPosition;
+          attribute float aSize;
+          attribute vec3 aColor;
+          attribute float aBranch;
+          uniform float uAspect;
+          uniform float uTime;
+          uniform float uProgress;
+          uniform float uCameraDist;
+          uniform float uPitch;
+          uniform float uYaw;
+          uniform float uHoverBranch;
+          varying vec3 vColor;
+          varying float vAlpha;
+
+          mat3 rotX(float a) {
+            float s = sin(a), c = cos(a);
+            return mat3(
+              1.0, 0.0, 0.0,
+              0.0, c, -s,
+              0.0, s, c
+            );
+          }
+
+          mat3 rotY(float a) {
+            float s = sin(a), c = cos(a);
+            return mat3(
+              c, 0.0, s,
+              0.0, 1.0, 0.0,
+              -s, 0.0, c
+            );
+          }
+
+          void main() {
+            vec3 pos = aPosition + vec3(0.26, 0.0, 0.0);
+            float drift = 1.0 - uProgress;
+            pos.x += sin(uTime * 0.26 + aSize * 0.9) * 0.02 * drift;
+            pos.y += cos(uTime * 0.31 + aSize * 0.7) * 0.02 * drift;
+            pos.z += sin(uTime * 0.18 + aSize * 0.5) * 0.03 * drift;
+
+            vec3 view = rotY(uYaw) * rotX(uPitch) * pos;
+            float cam = max(uCameraDist - view.z, 0.2);
+            float perspective = 1.0 / cam;
+            vec2 clip = view.xy * perspective * 1.92;
+            clip.x /= uAspect;
+            gl_Position = vec4(clip, 0.0, 1.0);
+
+            float focus = 1.0;
+            if (uHoverBranch > 0.5) {
+              float matched = 1.0 - step(0.25, abs(aBranch - uHoverBranch));
+              focus = mix(0.45, 1.35, matched);
+            }
+
+            float sizeScale = mix(52.0, 30.0, uProgress);
+            gl_PointSize = aSize * sizeScale * perspective * focus;
+            vColor = aColor;
+            vAlpha = mix(0.72, 0.96, uProgress) * mix(0.72, 1.0, focus);
+          }
+        `;
+
+        const fsSource = `
+          precision mediump float;
+          varying vec3 vColor;
+          varying float vAlpha;
+          void main() {
+            vec2 uv = gl_PointCoord - 0.5;
+            float d = length(uv);
+            float alpha = smoothstep(0.56, 0.06, d);
+            float glow = smoothstep(0.42, 0.0, d) * 0.26;
+            gl_FragColor = vec4(vColor + glow * 0.10, alpha * vAlpha);
+          }
+        `;
+
+        program = createProgram(vsSource, fsSource);
+        attribs = {
+          position: gl.getAttribLocation(program, 'aPosition'),
+          size: gl.getAttribLocation(program, 'aSize'),
+          color: gl.getAttribLocation(program, 'aColor'),
+          branch: gl.getAttribLocation(program, 'aBranch')
+        };
+        uniforms = {
+          aspect: gl.getUniformLocation(program, 'uAspect'),
+          time: gl.getUniformLocation(program, 'uTime'),
+          progress: gl.getUniformLocation(program, 'uProgress'),
+          cameraDist: gl.getUniformLocation(program, 'uCameraDist'),
+          pitch: gl.getUniformLocation(program, 'uPitch'),
+          yaw: gl.getUniformLocation(program, 'uYaw'),
+          hoverBranch: gl.getUniformLocation(program, 'uHoverBranch')
+        };
+
+        posBuffer = gl.createBuffer();
+        sizeBuffer = gl.createBuffer();
+        colorBuffer = gl.createBuffer();
+        branchBuffer = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, sizes, gl.STATIC_DRAW);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, branchBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, branches, gl.STATIC_DRAW);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.disable(gl.DEPTH_TEST);
+        resize();
+        return true;
+      }
+
+      function updatePositions(time) {
+        const t = (time - startTime) * 0.001;
+        const progress = getProgress(time);
+        const px = pointer.x;
+        const py = pointer.y;
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          let x = current[i3];
+          let y = current[i3 + 1];
+          let z = current[i3 + 2];
+          let vx = velocity[i3];
+          let vy = velocity[i3 + 1];
+          let vz = velocity[i3 + 2];
+
+          const tx = assembled ? target[i3] : home[i3];
+          const ty = assembled ? target[i3 + 1] : home[i3 + 1];
+          const tz = assembled ? target[i3 + 2] : home[i3 + 2];
+
+          const dx = tx - x;
+          const dy = ty - y;
+          const dz = tz - z;
+          const spring = assembled ? lerp(0.025, 0.052, progress) : 0.0032;
+          vx += dx * spring;
+          vy += dy * spring;
+          vz += dz * spring;
+
+          if (!assembled) {
+            vx += Math.sin(t * 0.52 + i * 0.017) * 0.00052;
+            vy += Math.cos(t * 0.47 + i * 0.013) * 0.00048;
+            vz += Math.sin(t * 0.34 + i * 0.009) * 0.00028;
+          } else {
+            const settle = 1.0 - progress;
+            vx += Math.sin(t * 0.82 + i * 0.011) * 0.00042 * settle;
+            vy += Math.cos(t * 0.76 + i * 0.009) * 0.00042 * settle;
+            vz += Math.sin(t * 0.62 + i * 0.008) * 0.0003 * settle;
+          }
+
+          if (pointer.moved && !assembled) {
+            const mx = x * 0.38 - px;
+            const my = y * 0.42 - py;
+            const dist2 = mx * mx + my * my + 0.03;
+            const influence = 0.0026 / dist2;
+            vx += mx * influence;
+            vy += my * influence;
+          }
+
+          const damp = assembled ? lerp(0.80, 0.90, progress) : 0.972;
+          vx *= damp;
+          vy *= damp;
+          vz *= damp;
+
+          x += vx;
+          y += vy;
+          z += vz;
+
+          if (!assembled) {
+            if (x < -3.4) x = 3.2;
+            if (x > 3.4) x = -3.2;
+            if (y < -2.3) y = 2.1;
+            if (y > 2.3) y = -2.1;
+            if (z < -2.4) z = 2.2;
+            if (z > 2.6) z = -2.2;
+          }
+
+          current[i3] = x;
+          current[i3 + 1] = y;
+          current[i3 + 2] = z;
+          velocity[i3] = vx;
+          velocity[i3 + 1] = vy;
+          velocity[i3 + 2] = vz;
+        }
+      }
+
+      function render(time) {
+        if (!gl) return;
+        const progress = getProgress(time);
+        updatePositions(time);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(program);
+
+        gl.uniform1f(uniforms.aspect, canvas.width / Math.max(canvas.height, 1));
+        gl.uniform1f(uniforms.time, (time - startTime) * 0.001);
+        gl.uniform1f(uniforms.progress, progress);
+        gl.uniform1f(uniforms.cameraDist, lerp(5.0, 3.18, progress));
+        gl.uniform1f(uniforms.pitch, lerp(0.04, 0.52, progress));
+        gl.uniform1f(uniforms.yaw, lerp(-0.02, -0.34, progress));
+        gl.uniform1f(uniforms.hoverBranch, hoverBranch);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, current, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(attribs.position);
+        gl.vertexAttribPointer(attribs.position, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+        gl.enableVertexAttribArray(attribs.size);
+        gl.vertexAttribPointer(attribs.size, 1, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.enableVertexAttribArray(attribs.color);
+        gl.vertexAttribPointer(attribs.color, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, branchBuffer);
+        gl.enableVertexAttribArray(attribs.branch);
+        gl.vertexAttribPointer(attribs.branch, 1, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.POINTS, 0, PARTICLE_COUNT);
+        rafId = requestAnimationFrame(render);
+      }
+
+      function pointerToNDC(event) {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -((event.clientY / window.innerHeight) * 2 - 1);
+        pointer.moved = true;
+      }
+
+      function handlePointer(event) {
+        pointerToNDC(event);
+        if (pointer.lastClientX === null || pointer.lastClientY === null) {
+          pointer.lastClientX = event.clientX;
+          pointer.lastClientY = event.clientY;
+          return;
+        }
+        const dx = event.clientX - pointer.lastClientX;
+        const dy = event.clientY - pointer.lastClientY;
+        pointer.lastClientX = event.clientX;
+        pointer.lastClientY = event.clientY;
+        if (!entered && Math.hypot(dx, dy) > 8) {
+          entered = true;
+          triggerAssemble();
+        }
+      }
+
+      function bindMenuHover() {
+        menuItems.forEach((item) => {
+          const branch = Number(item.dataset.branch || 0);
+          item.addEventListener('pointerenter', () => {
+            hoverBranch = branch;
+            triggerAssemble();
+          });
+          item.addEventListener('pointerleave', () => {
+            hoverBranch = 0;
+          });
+          item.addEventListener('focus', () => {
+            hoverBranch = branch;
+            triggerAssemble();
+          });
+          item.addEventListener('blur', () => {
+            hoverBranch = 0;
+          });
+          item.addEventListener('click', () => {
+            const href = item.dataset.target;
+            const immediate = assembled;
+            triggerAssemble();
+            queueNavigation(href, immediate);
+          });
+        });
+      }
+
+      function init() {
+        initState();
+        if (!initGL()) return;
+        bindMenuHover();
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('pointermove', handlePointer, { passive: true });
+        window.addEventListener('pointerdown', triggerAssemble, { passive: true });
+        window.addEventListener('keydown', triggerAssemble, { passive: true });
+
+        canvas.addEventListener('webglcontextlost', (event) => {
+          event.preventDefault();
+          if (rafId) cancelAnimationFrame(rafId);
+        });
+
+        canvas.addEventListener('webglcontextrestored', () => {
+          initState();
+          initGL();
+          bindMenuHover();
+          rafId = requestAnimationFrame(render);
+        });
+
+        rafId = requestAnimationFrame(render);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,4191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第四部分｜把 AI 纳入工作流</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%233d72d9'/%3E%3Cpath d='M14 43V21h11l7 10 7-10h11v22h-8V31l-10 12-10-12v12z' fill='%23f8fbff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../shared/part-jump-menu.css?v=20260312c" />
+  <style>
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    :root {
+      --font-display: "SF Pro Display", "Sora", "Source Han Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --font-body: "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", Arial, sans-serif;
+
+      --bg: #f7fbff;
+      --bg-soft: #fcfdff;
+      --bg-strong: #eef5ff;
+      --surface: rgba(255, 255, 255, 0.86);
+      --surface-strong: rgba(255, 255, 255, 0.96);
+      --surface-tint-blue: rgba(121, 168, 255, 0.10);
+      --surface-tint-teal: rgba(105, 222, 210, 0.10);
+      --ink: #203250;
+      --muted: #61779b;
+      --soft: #93a7c7;
+      --line: rgba(132, 156, 200, 0.18);
+      --line-strong: rgba(121, 168, 255, 0.34);
+      --blue: #79a8ff;
+      --blue-deep: #3a5686;
+      --teal: #69ded2;
+      --teal-deep: #2f958d;
+      --purple: #c197ff;
+      --peach: #ffc2a4;
+      --blue-fog: rgba(121, 168, 255, 0.20);
+      --teal-fog: rgba(105, 222, 210, 0.18);
+      --shadow-sm: 0 10px 30px rgba(75, 102, 156, 0.08);
+      --shadow-md: 0 20px 44px rgba(75, 102, 156, 0.10);
+      --shadow-lg: 0 28px 64px rgba(75, 102, 156, 0.14);
+      --radius-sm: 1rem;
+      --radius-md: 1.4rem;
+      --radius-lg: 1.9rem;
+      --slide-padding: clamp(1rem, 3.6vw, 3rem);
+      --content-gap: clamp(0.8rem, 1.8vw, 1.5rem);
+      --cluster-gap: clamp(0.75rem, 1.1vw, 1rem);
+      --max-content-width: min(1220px, 92vw);
+      --title-size: clamp(2.6rem, 5.7vw, 5.8rem);
+      --h2-size: clamp(1.55rem, 3.2vw, 3.1rem);
+      --h3-size: clamp(1.02rem, 1.5vw, 1.24rem);
+      --body-size: clamp(0.88rem, 1.02vw, 0.98rem);
+      --small-size: clamp(0.70rem, 0.85vw, 0.82rem);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --accel-progress: 0;
+      --flow-progress: 0;
+      --roadmap-progress: 0;
+      --bubble-1: rgba(121, 168, 255, 0.34);
+      --bubble-2: rgba(105, 222, 210, 0.28);
+      --bubble-3: rgba(193, 151, 255, 0.26);
+      --bubble-4: rgba(255, 194, 164, 0.20);
+      --bubble-core: rgba(255, 255, 255, 0.96);
+      --bubble-outline: rgba(136, 165, 222, 0.18);
+      --bubble-opacity: 0.90;
+      --part-jump-menu-bg: rgba(253, 253, 255, 0.88);
+      --part-jump-menu-bg-soft: rgba(237, 243, 255, 0.72);
+      --part-jump-menu-line: rgba(128, 155, 214, 0.22);
+      --part-jump-menu-text: var(--ink);
+      --part-jump-menu-text-soft: var(--muted);
+      --part-jump-menu-shadow: 0 18px 44px rgba(74, 102, 156, 0.12);
+      --part-jump-menu-font: var(--font-body);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.38) 24%, rgba(255, 255, 255, 0) 48%),
+        radial-gradient(circle at 84% 14%, rgba(252, 247, 255, 0.86), rgba(252, 247, 255, 0) 30%),
+        linear-gradient(180deg, #fbfdff 0%, #f5f9ff 54%, #eef5ff 100%);
+      overflow: hidden;
+      letter-spacing: -0.01em;
+      position: relative;
+      isolation: isolate;
+    }
+
+    body::before,
+    body::after,
+    #deck::before,
+    #deck::after {
+      content: "";
+      pointer-events: none;
+      transition:
+        transform 900ms var(--ease-out),
+        opacity 700ms var(--ease-out),
+        filter 700ms var(--ease-out),
+        background 700ms var(--ease-out);
+    }
+
+    body::before,
+    body::after {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      background:
+        radial-gradient(circle at 10% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 24%),
+        radial-gradient(circle at 84% 78%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 18%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+      opacity: 0.96;
+    }
+
+    body::after {
+      background:
+        radial-gradient(circle at 12% 22%, var(--bubble-1) 0%, rgba(121, 168, 255, 0) 18%),
+        radial-gradient(circle at 85% 18%, var(--bubble-3) 0%, rgba(193, 151, 255, 0) 15%),
+        radial-gradient(circle at 18% 84%, var(--bubble-2) 0%, rgba(105, 222, 210, 0) 16%),
+        radial-gradient(circle at 88% 76%, var(--bubble-4) 0%, rgba(255, 194, 164, 0) 14%);
+      filter: blur(44px) saturate(115%);
+      opacity: var(--bubble-opacity);
+      transform: translate3d(0, 0, 0) scale(1.08);
+      animation: bubble-drift 24s ease-in-out infinite alternate;
+    }
+
+    body[data-theme="intro"] {
+      --bubble-1: rgba(121, 168, 255, 0.34);
+      --bubble-2: rgba(105, 222, 210, 0.28);
+      --bubble-3: rgba(193, 151, 255, 0.24);
+      --bubble-4: rgba(255, 194, 164, 0.18);
+      --bubble-opacity: 0.90;
+    }
+
+    body[data-theme="accel"] {
+      --bubble-1: rgba(112, 174, 255, 0.40);
+      --bubble-2: rgba(102, 234, 220, 0.32);
+      --bubble-3: rgba(188, 165, 255, 0.18);
+      --bubble-4: rgba(255, 197, 174, 0.16);
+      --bubble-opacity: 0.94;
+    }
+
+    body[data-theme="workflow"] {
+      --bubble-1: rgba(128, 182, 255, 0.26);
+      --bubble-2: rgba(102, 233, 208, 0.34);
+      --bubble-3: rgba(162, 220, 255, 0.16);
+      --bubble-4: rgba(208, 255, 227, 0.16);
+      --bubble-opacity: 0.90;
+    }
+
+    body[data-theme="research"] {
+      --bubble-1: rgba(138, 174, 255, 0.28);
+      --bubble-2: rgba(120, 219, 226, 0.22);
+      --bubble-3: rgba(205, 157, 255, 0.32);
+      --bubble-4: rgba(255, 213, 191, 0.16);
+      --bubble-opacity: 0.92;
+    }
+
+    body[data-theme="roadmap"] {
+      --bubble-1: rgba(124, 161, 255, 0.34);
+      --bubble-2: rgba(122, 216, 225, 0.22);
+      --bubble-3: rgba(193, 155, 255, 0.28);
+      --bubble-4: rgba(255, 204, 174, 0.24);
+      --bubble-opacity: 0.88;
+    }
+
+    #deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      z-index: 1;
+      isolation: isolate;
+    }
+
+    #deck::before,
+    #deck::after {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    #deck::before {
+      inset: -8% -5%;
+      background:
+        radial-gradient(circle at 8% 18%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.92) 3.6%, rgba(255, 255, 255, 0.28) 4.4%, rgba(121, 168, 255, 0.18) 10%, transparent 13.5%),
+        radial-gradient(circle at 89% 14%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.92) 3.4%, rgba(255, 255, 255, 0.26) 4.1%, rgba(193, 151, 255, 0.18) 9.6%, transparent 13.2%),
+        radial-gradient(circle at 17% 82%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.88) 3.1%, rgba(255, 255, 255, 0.22) 3.8%, rgba(105, 222, 210, 0.18) 8.8%, transparent 12%),
+        radial-gradient(circle at 94% 74%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.88) 2.8%, rgba(255, 255, 255, 0.22) 3.5%, rgba(255, 194, 164, 0.16) 8%, transparent 10.8%),
+        radial-gradient(circle at 76% 52%, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.74) 2.1%, rgba(255, 255, 255, 0.18) 2.8%, rgba(121, 168, 255, 0.12) 6.5%, transparent 8.6%),
+        radial-gradient(circle at 24% 38%, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.68) 1.8%, rgba(255, 255, 255, 0.16) 2.4%, rgba(193, 151, 255, 0.10) 5.6%, transparent 7.8%);
+      opacity: 0.88;
+      transform: translate3d(0, 0, 0) scale(1.02);
+      transform-origin: center;
+      animation: bubble-float 30s ease-in-out infinite alternate;
+    }
+
+    #deck::after {
+      inset: -10% -8%;
+      background:
+        radial-gradient(circle at 14% 16%, var(--bubble-1) 0%, rgba(121, 168, 255, 0) 8.5%),
+        radial-gradient(circle at 84% 18%, var(--bubble-3) 0%, rgba(193, 151, 255, 0) 7.6%),
+        radial-gradient(circle at 15% 82%, var(--bubble-2) 0%, rgba(105, 222, 210, 0) 8.2%),
+        radial-gradient(circle at 86% 72%, var(--bubble-4) 0%, rgba(255, 194, 164, 0) 7.2%),
+        radial-gradient(circle at 72% 48%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 5.6%),
+        radial-gradient(circle at 26% 34%, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0) 4.8%);
+      filter: blur(26px) saturate(116%);
+      opacity: 0.76;
+      animation: bubble-drift 26s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes bubble-drift {
+      0% {
+        transform: translate3d(-1.2vw, -1vh, 0) scale(1.04);
+      }
+      50% {
+        transform: translate3d(1.6vw, 1.4vh, 0) scale(1.09);
+      }
+      100% {
+        transform: translate3d(-0.6vw, 2vh, 0) scale(1.05);
+      }
+    }
+
+    @keyframes bubble-float {
+      0% {
+        transform: translate3d(-1vw, -0.8vh, 0) scale(1.01);
+      }
+      50% {
+        transform: translate3d(1.2vw, 1vh, 0) scale(1.03);
+      }
+      100% {
+        transform: translate3d(0.4vw, -1.4vh, 0) scale(1.02);
+      }
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(1.4rem);
+      pointer-events: none;
+      transition:
+        opacity 360ms var(--ease-out),
+        transform 560ms var(--ease-out),
+        visibility 0s linear 360ms;
+    }
+
+    .slide.is-active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      pointer-events: auto;
+      transition-delay: 0s;
+      z-index: 2;
+    }
+
+    .slide-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: var(--slide-padding);
+    }
+
+    .inner {
+      width: min(100%, var(--max-content-width));
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--content-gap);
+      position: relative;
+    }
+
+    h1, h2, h3, p, ul {
+      margin: 0;
+    }
+
+    h1, h2 {
+      font-family: var(--font-display);
+      text-wrap: balance;
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      color: var(--ink);
+    }
+
+    h1 {
+      font-size: var(--title-size);
+      line-height: 0.92;
+      max-width: 10ch;
+    }
+
+    h2 {
+      font-size: var(--h2-size);
+      line-height: 1.02;
+      max-width: 13ch;
+    }
+
+    h3 {
+      font-size: var(--h3-size);
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    p, li {
+      font-size: var(--body-size);
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .lead {
+      font-size: clamp(0.96rem, 1.25vw, 1.12rem);
+      max-width: 34ch;
+      color: var(--muted);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: var(--small-size);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--blue-deep);
+      font-weight: 700;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 2.6rem;
+      height: 1px;
+      background: linear-gradient(90deg, var(--blue), rgba(105, 222, 210, 0.32));
+      transform-origin: left center;
+    }
+
+    .page-rule {
+      width: clamp(8rem, 16vw, 13rem);
+      height: 1px;
+      background: linear-gradient(90deg, var(--blue), rgba(105, 222, 210, 0.34));
+      transform-origin: left center;
+      opacity: 0.9;
+    }
+
+    .reveal,
+    .draw-in,
+    .reveal-group > * {
+      opacity: 0;
+      transform: translateY(20px);
+      transition:
+        opacity 640ms var(--ease-out),
+        transform 760ms var(--ease-out);
+      transition-delay: var(--delay, 0ms);
+    }
+
+    .draw-in {
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .slide.is-active .reveal,
+    .slide.is-active .reveal-group > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .slide.is-active .draw-in {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    .chrome {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 12;
+      padding: clamp(0.85rem, 2vw, 1.4rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .chrome-top,
+    .chrome-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .chrome-top {
+      display: none;
+    }
+
+    .chrome-bottom {
+      margin-top: auto;
+    }
+
+    .chrome-cluster {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      pointer-events: auto;
+    }
+
+    .chrome-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 2.15rem;
+      padding: 0.48rem 0.82rem;
+      border: 1px solid rgba(111, 132, 165, 0.16);
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: var(--shadow-sm);
+      color: var(--muted);
+      border-radius: 999px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      font-size: var(--small-size);
+      letter-spacing: 0.06em;
+    }
+
+    .chrome-label {
+      color: var(--soft);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+    }
+
+    .chrome-value {
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .keyboard-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.3rem;
+      height: 1.3rem;
+      padding-inline: 0.2rem;
+      border-radius: 999px;
+      border: 1px solid rgba(111, 132, 165, 0.18);
+      background: rgba(247, 250, 255, 0.9);
+      color: var(--ink);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .nav-dots {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      pointer-events: auto;
+    }
+
+    .nav-dot {
+      appearance: none;
+      border: 0;
+      width: 1.55rem;
+      height: 0.24rem;
+      border-radius: 999px;
+      background: rgba(120, 136, 167, 0.22);
+      padding: 0;
+      cursor: pointer;
+      transition: transform 240ms ease, background-color 240ms ease, width 240ms ease;
+    }
+
+    .nav-dot:hover,
+    .nav-dot:focus-visible {
+      background: rgba(121, 168, 255, 0.48);
+      outline: none;
+    }
+
+    .nav-dot.active {
+      width: 2.5rem;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      transform: translateY(-1px);
+    }
+
+    .quiet-grid,
+    .quiet-split,
+    .workflow-stage,
+    .assistant-stage,
+    .roadmap-stage,
+    .closing-stage {
+      display: grid;
+      gap: clamp(1rem, 2.2vw, 2rem);
+      align-items: center;
+    }
+
+    .quiet-grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.85fr);
+    }
+
+    .hero-copy,
+    .section-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      min-width: 0;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin-top: 0.15rem;
+    }
+
+    .hero-tag,
+    .micro-tag,
+    .foundation-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.34rem 0.68rem;
+      border-radius: 999px;
+      border: 1px solid rgba(111, 132, 165, 0.14);
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--blue-deep);
+      font-size: var(--small-size);
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .statement-card {
+      position: relative;
+      width: min(100%, 980px);
+      margin-top: 0.35rem;
+      padding: clamp(1.1rem, 2vw, 1.5rem);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .statement-card,
+    .accel-shell,
+    .workflow-shell,
+    .roadmap-shell,
+    .pipeline-input,
+    .pipeline-output,
+    .accel-workbench,
+    .workflow-main-step,
+    .pillar,
+    .side-item,
+    .core-stage,
+    .method-list,
+    .stage-block {
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .statement-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 34%;
+      background: linear-gradient(135deg, rgba(121, 168, 255, 0.16), rgba(105, 222, 210, 0.04));
+      clip-path: polygon(0 0, 100% 0, 62% 100%, 0 100%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .statement-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .statement-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem 1.1rem;
+      align-items: center;
+    }
+
+    .statement-kicker {
+      font-size: var(--small-size);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .statement-card strong,
+    .closing-manifesto strong {
+      display: block;
+      font-size: clamp(1.12rem, 1.6vw, 1.35rem);
+      line-height: 1.28;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+    }
+
+    .accel-shell,
+    .workflow-shell,
+    .roadmap-shell {
+      position: relative;
+      width: min(100%, 1080px);
+      padding: clamp(1rem, 2vw, 1.45rem);
+      border-radius: 2rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62));
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .accel-shell::before,
+    .workflow-shell::before,
+    .roadmap-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(121, 168, 255, 0.08), rgba(255,255,255,0) 44%, rgba(105, 222, 210, 0.07));
+    }
+
+    .accel-head,
+    .workflow-head,
+    .roadmap-head,
+    .methods-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-label {
+      font-size: var(--small-size);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .accel-stage {
+      display: grid;
+      gap: 0.95rem;
+      align-items: center;
+    }
+
+    .accel-pipeline {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 0.56rem;
+      justify-items: center;
+    }
+
+    .pipeline-input,
+    .pipeline-output {
+      position: relative;
+      width: min(100%, 25rem);
+      padding: 0.64rem 0.9rem 0.68rem;
+      text-align: center;
+      border-radius: calc(var(--radius-md) + 0.05rem);
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(244,248,253,0.82));
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .pipeline-input::before,
+    .pipeline-output::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(121,168,255,0.10), rgba(255,255,255,0) 55%, rgba(105,222,210,0.06));
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .pipeline-output::before {
+      opacity: calc(0.18 + (var(--accel-progress) / 125));
+    }
+
+    .pipeline-label {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.24rem;
+      font-size: var(--small-size);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .pipeline-title {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(1.06rem, 1.5vw, 1.24rem);
+      line-height: 1.18;
+      color: var(--ink);
+      letter-spacing: -0.026em;
+      font-weight: 700;
+    }
+
+    .pipeline-input p,
+    .pipeline-output p {
+      position: relative;
+      z-index: 1;
+      margin-top: 0.22rem;
+      max-width: 22ch;
+      margin-inline: auto;
+    }
+
+    .pipeline-beam {
+      width: 1px;
+      height: 0.58rem;
+      background: linear-gradient(180deg, rgba(121,168,255,0), rgba(121,168,255,0.42), rgba(105,222,210,0.26), rgba(105,222,210,0));
+    }
+
+    .accel-workbench {
+      position: relative;
+      width: 100%;
+      padding: 0.68rem 0.78rem 0.78rem;
+      border-radius: calc(var(--radius-lg) - 0.1rem);
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(248,251,255,0.72));
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .accel-workbench::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(121,168,255,0.08), rgba(255,255,255,0) 48%, rgba(105,222,210,0.07));
+      pointer-events: none;
+    }
+
+    .workbench-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.48rem;
+    }
+
+    .accel-rail {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(0.65rem, 1vw, 0.9rem);
+      padding-top: 0.95rem;
+    }
+
+    .accel-rail::before {
+      content: "";
+      position: absolute;
+      left: 0.95rem;
+      right: 0.95rem;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(112,133,168,0.10), rgba(112,133,168,0.24), rgba(112,133,168,0.10));
+    }
+
+    .accel-progress-line,
+    .workflow-progress-line {
+      position: absolute;
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      transform-origin: left center;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+    }
+
+    .accel-progress-line {
+      left: 0.95rem;
+      top: 0;
+      height: 2px;
+      width: calc((100% - 1.9rem) * (var(--accel-progress) / 100));
+    }
+
+    .accel-step,
+    .workflow-node {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.34rem;
+      padding: 0.68rem 0.72rem 0.72rem;
+      min-height: 88px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(111, 132, 165, 0.10);
+      box-shadow: 0 8px 20px rgba(48, 72, 111, 0.04);
+      transition:
+        border-color 360ms var(--ease-out),
+        transform 360ms var(--ease-out),
+        background-color 360ms var(--ease-out),
+        box-shadow 360ms var(--ease-out);
+    }
+
+    .accel-step::before {
+      content: "";
+      position: absolute;
+      top: -0.42rem;
+      left: 1rem;
+      width: 0.78rem;
+      height: 0.78rem;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(111, 132, 165, 0.16);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.74);
+      transition: background-color 280ms ease, border-color 280ms ease, box-shadow 280ms ease;
+    }
+
+    .accel-step.is-on,
+    .workflow-node.is-on {
+      border-color: rgba(121, 168, 255, 0.26);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(239,245,252,0.92));
+      box-shadow: 0 14px 28px rgba(48, 72, 111, 0.08);
+      transform: translateY(-4px);
+    }
+
+    .accel-step.is-on::before {
+      background: linear-gradient(180deg, var(--blue), var(--teal));
+      border-color: rgba(121, 168, 255, 0.12);
+      box-shadow: 0 0 0 8px rgba(232, 242, 252, 0.9);
+    }
+
+    .step-no,
+    .node-no,
+    .manifesto-no {
+      font-size: var(--small-size);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .step-title,
+    .node-title {
+      font-size: clamp(1.03rem, 1.35vw, 1.18rem);
+      line-height: 1.18;
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .step-note,
+    .node-note {
+      color: var(--muted);
+    }
+
+    .accent-note {
+      position: relative;
+      z-index: 1;
+      color: var(--blue-deep);
+      font-size: clamp(1.05rem, 1.5vw, 1.22rem);
+      letter-spacing: -0.028em;
+      font-weight: 700;
+      margin-top: 0.1rem;
+      text-align: center;
+    }
+
+    .quiet-split {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 0.25rem;
+    }
+
+    .pillar {
+      position: relative;
+      padding: clamp(1.2rem, 2vw, 1.6rem);
+      min-height: clamp(260px, 44vh, 360px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: calc(var(--radius-lg) + 0.2rem);
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76));
+    }
+
+    .pillar::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 46%;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .pillar[data-kind="daily"]::before {
+      background: linear-gradient(135deg, rgba(121, 168, 255, 0.18), rgba(121,168,255,0.03));
+      clip-path: polygon(0 0, 100% 0, 72% 100%, 0 100%);
+    }
+
+    .pillar[data-kind="research"]::before {
+      background: linear-gradient(135deg, rgba(105, 222, 210, 0.18), rgba(105,222,210,0.03));
+      clip-path: polygon(0 0, 100% 0, 72% 100%, 0 100%);
+    }
+
+    .pillar-top,
+    .pillar-list,
+    .pillar-foot {
+      position: relative;
+      z-index: 1;
+    }
+
+    .pillar-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .pillar-no {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 0.9;
+      color: rgba(48, 72, 111, 0.18);
+      letter-spacing: -0.05em;
+      font-weight: 700;
+    }
+
+    .pillar-list {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .pillar-list li {
+      position: relative;
+      padding-left: 1rem;
+      font-size: clamp(1rem, 1.22vw, 1.08rem);
+      color: var(--ink);
+    }
+
+    .pillar-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 0.36rem;
+      height: 0.36rem;
+      background: linear-gradient(180deg, var(--blue), var(--teal));
+      transform: rotate(45deg);
+    }
+
+    .pillar-foot {
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(111, 132, 165, 0.12);
+    }
+
+    .workflow-stage {
+      gap: 1.05rem;
+    }
+
+    .workflow-pipeline {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .workflow-mainline,
+    .workflow-assistline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(0.65rem, 1vw, 0.95rem);
+    }
+
+    .workflow-main-step {
+      position: relative;
+      min-height: 100px;
+      padding: 0.9rem 0.85rem 0.95rem;
+      border-radius: calc(var(--radius-md) - 0.05rem);
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,249,253,0.84));
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .workflow-main-step::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(121,168,255,0.10), rgba(255,255,255,0) 64%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .workflow-main-step > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .main-step-no {
+      margin-bottom: 0.25rem;
+      font-size: var(--small-size);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .main-step-title {
+      font-size: clamp(1.02rem, 1.32vw, 1.16rem);
+      line-height: 1.18;
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .main-step-note {
+      margin-top: 0.26rem;
+      font-size: var(--small-size);
+      color: var(--muted);
+    }
+
+    .workflow-assistline {
+      position: relative;
+      padding-top: 1.05rem;
+    }
+
+    .workflow-assistline::before {
+      content: "";
+      position: absolute;
+      left: 0.9rem;
+      right: 0.9rem;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(112,133,168,0.10), rgba(112,133,168,0.24), rgba(112,133,168,0.10));
+    }
+
+    .workflow-progress-line {
+      left: 0.9rem;
+      top: 0;
+      height: 2px;
+      width: calc((100% - 1.8rem) * (var(--flow-progress) / 100));
+    }
+
+    .workflow-node {
+      min-height: 108px;
+      padding: 0.8rem 0.8rem 0.82rem;
+      background: rgba(255,255,255,0.64);
+    }
+
+    .workflow-node::before {
+      content: "";
+      position: absolute;
+      top: -1.05rem;
+      left: 1rem;
+      width: 1px;
+      height: 1.05rem;
+      background: linear-gradient(180deg, rgba(121,168,255,0.32), rgba(121,168,255,0.08));
+      box-shadow: none;
+      border: 0;
+      border-radius: 999px;
+      transform: none;
+    }
+
+    .workflow-node::after {
+      content: "";
+      position: absolute;
+      top: -0.43rem;
+      left: calc(1rem - 0.34rem);
+      width: 0.72rem;
+      height: 0.72rem;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(111, 132, 165, 0.16);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.74);
+      transition: background-color 280ms ease, border-color 280ms ease, box-shadow 280ms ease;
+    }
+
+    .workflow-node.is-on::after {
+      background: linear-gradient(180deg, var(--blue), var(--teal));
+      border-color: rgba(121, 168, 255, 0.12);
+      box-shadow: 0 0 0 8px rgba(232, 242, 252, 0.9);
+    }
+
+    .workflow-foot {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      padding-top: 0.1rem;
+    }
+
+    .workflow-foot strong {
+      color: var(--blue-deep);
+      font-size: clamp(1.02rem, 1.32vw, 1.14rem);
+      letter-spacing: -0.024em;
+    }
+
+    .assistant-stage {
+      grid-template-columns: minmax(0, 0.72fr) minmax(280px, 1fr) minmax(0, 0.72fr);
+      align-items: stretch;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 0.85rem;
+      align-content: center;
+    }
+
+    .side-item,
+    .core-stage {
+      position: relative;
+      padding: 1rem 1rem 1.05rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .side-item::before,
+    .core-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--blue), var(--teal));
+      opacity: 0.7;
+    }
+
+    .side-item h3 {
+      margin-bottom: 0.28rem;
+    }
+
+    .side-label {
+      font-size: var(--small-size);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--soft);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .core-stage {
+      padding: clamp(1.4rem, 2.8vw, 2rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(238,245,252,0.9));
+      box-shadow: var(--shadow-lg);
+      min-height: clamp(290px, 44vh, 380px);
+    }
+
+    .core-stage::after {
+      content: "";
+      position: absolute;
+      inset: 16% 10%;
+      border-radius: calc(var(--radius-md) + 0.2rem);
+      border: 1px solid rgba(121, 168, 255, 0.09);
+      background: linear-gradient(135deg, rgba(121,168,255,0.08), rgba(255,255,255,0));
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+      pointer-events: none;
+    }
+
+    .core-stage > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .core-eyebrow {
+      font-size: var(--small-size);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .core-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.9rem, 3.2vw, 3rem);
+      line-height: 0.95;
+      color: var(--ink);
+      letter-spacing: -0.05em;
+    }
+
+    .core-links {
+      display: grid;
+      gap: 0.52rem;
+      min-width: min(100%, 22rem);
+    }
+
+    .core-links span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 2.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      background: rgba(255,255,255,0.68);
+      color: var(--blue-deep);
+      font-size: var(--small-size);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .core-note {
+      max-width: 22ch;
+      color: var(--muted);
+    }
+
+    .methods-stage {
+      display: grid;
+      gap: 1rem;
+      margin-top: 0.2rem;
+    }
+
+    .method-list {
+      border-top: 1px solid rgba(111, 132, 165, 0.12);
+      border-bottom: 1px solid rgba(111, 132, 165, 0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.36));
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .method-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 150px) minmax(0, 1fr) minmax(120px, 160px);
+      gap: 1rem;
+      align-items: center;
+      padding: clamp(0.95rem, 1.6vw, 1.15rem) clamp(1rem, 1.8vw, 1.4rem);
+      border-bottom: 1px solid rgba(111, 132, 165, 0.10);
+    }
+
+    .method-row:last-child {
+      border-bottom: 0;
+    }
+
+    .method-tag {
+      font-family: var(--font-display);
+      font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .method-main {
+      color: var(--ink);
+      font-size: clamp(1rem, 1.2vw, 1.08rem);
+      letter-spacing: -0.022em;
+    }
+
+    .method-value {
+      justify-self: end;
+      color: var(--blue-deep);
+      font-size: var(--small-size);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .method-takeaway {
+      font-size: clamp(1.08rem, 1.45vw, 1.25rem);
+      line-height: 1.4;
+      color: var(--blue-deep);
+      letter-spacing: -0.03em;
+      font-weight: 700;
+      max-width: 36ch;
+    }
+
+    .roadmap-stage {
+      gap: 1rem;
+    }
+
+    .step-band {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      min-height: 244px;
+    }
+
+    .step-band::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(121,168,255,0.08), rgba(121,168,255,0.18), rgba(105,222,210,0.12));
+      pointer-events: none;
+    }
+
+    .step-segment {
+      position: relative;
+      flex: 1 1 0;
+      display: flex;
+      align-items: end;
+      min-height: 152px;
+    }
+
+    .stage-block {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      padding: 1.05rem 1rem 1.05rem;
+      border-radius: calc(var(--radius-md) + 0.15rem);
+      background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(245,249,253,0.84));
+      border: 1px solid rgba(111, 132, 165, 0.12);
+      box-shadow: var(--shadow-sm);
+      transition:
+        transform 360ms var(--ease-out),
+        box-shadow 360ms var(--ease-out),
+        border-color 360ms var(--ease-out),
+        background-color 360ms var(--ease-out),
+        opacity 320ms var(--ease-out);
+      overflow: hidden;
+      min-height: 152px;
+      width: 100%;
+    }
+
+    .stage-block::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--blue), var(--teal));
+      opacity: 0.7;
+    }
+
+    .stage-block::after {
+      content: "";
+      position: absolute;
+      inset: auto -1px -1px -1px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(121,168,255,0.20), rgba(105,222,210,0.14));
+      pointer-events: none;
+    }
+
+    .step-segment + .step-segment .stage-block {
+      border-top-left-radius: 0.7rem;
+    }
+
+    .step-segment:not(:last-child) .stage-block {
+      border-top-right-radius: 0.7rem;
+    }
+
+    .stage-block.stage-1 {
+      min-height: 138px;
+      transform: translateY(2rem);
+    }
+
+    .stage-block.stage-2 {
+      min-height: 178px;
+      transform: translateY(2.4rem);
+    }
+
+    .stage-block.stage-3 {
+      min-height: 218px;
+      transform: translateY(2.8rem);
+    }
+
+    .stage-block.is-on {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(238,245,252,0.92));
+      border-color: rgba(121, 168, 255, 0.22);
+      box-shadow: var(--shadow-md);
+      opacity: 1;
+    }
+
+    .stage-block:not(.is-on) {
+      opacity: 0.94;
+    }
+
+    .stage-kicker {
+      font-size: var(--small-size);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    .foundation-band {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.15rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid rgba(111, 132, 165, 0.10);
+    }
+
+    .foundation-track {
+      width: 100%;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(112, 133, 168, 0.12);
+      overflow: hidden;
+    }
+
+    .foundation-fill {
+      width: calc(var(--roadmap-progress) * 1%);
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      transition: width 320ms var(--ease-out);
+    }
+
+    .foundation-row {
+      display: flex;
+      gap: 0.48rem;
+      flex-wrap: wrap;
+    }
+
+    .closing-stage {
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.78fr);
+      align-items: center;
+    }
+
+    .closing-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+    }
+
+    .closing-manifesto {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 0.55rem;
+      max-width: min(68rem, 100%);
+      padding: 1rem 0.1rem 0.15rem;
+      isolation: isolate;
+      align-items: stretch;
+    }
+
+    .closing-laser-flow {
+      position: absolute;
+      inset: 50% 2% auto;
+      height: clamp(5rem, 16vh, 6.8rem);
+      transform: translateY(-50%);
+      border-radius: 999px;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+      opacity: 0.92;
+      background:
+        radial-gradient(circle at 18% 50%, rgba(163, 172, 255, 0.18), transparent 16%),
+        radial-gradient(circle at 52% 50%, rgba(123, 133, 255, 0.22), transparent 18%),
+        radial-gradient(circle at 82% 50%, rgba(163, 172, 255, 0.16), transparent 14%),
+        linear-gradient(90deg, rgba(93, 102, 229, 0), rgba(93, 102, 229, 0.22) 18%, rgba(93, 102, 229, 0.84) 50%, rgba(93, 102, 229, 0.26) 82%, rgba(93, 102, 229, 0));
+      filter: blur(0.3px) drop-shadow(0 0 22px rgba(93, 102, 229, 0.26));
+      animation: closing-laser-drift 9.6s ease-in-out infinite;
+    }
+
+    .closing-laser-flow::before,
+    .closing-laser-flow::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .closing-laser-flow::before {
+      inset: -22% -8%;
+      background:
+        repeating-linear-gradient(105deg,
+          rgba(255, 255, 255, 0) 0 10%,
+          rgba(173, 181, 255, 0.72) 11% 12.2%,
+          rgba(255, 255, 255, 0) 13% 20%),
+        linear-gradient(90deg, rgba(93, 102, 229, 0), rgba(132, 142, 255, 0.24) 28%, rgba(225, 228, 255, 0.92) 50%, rgba(132, 142, 255, 0.22) 72%, rgba(93, 102, 229, 0));
+      mix-blend-mode: screen;
+      opacity: 0.84;
+      animation: closing-laser-sweep 4.6s linear infinite;
+    }
+
+    .closing-laser-flow::after {
+      inset: -60% -4%;
+      background:
+        radial-gradient(circle at 16% 56%, rgba(151, 161, 255, 0.3), transparent 11%),
+        radial-gradient(circle at 42% 44%, rgba(186, 193, 255, 0.24), transparent 9%),
+        radial-gradient(circle at 63% 58%, rgba(128, 138, 255, 0.32), transparent 12%),
+        radial-gradient(circle at 86% 42%, rgba(170, 178, 255, 0.22), transparent 10%);
+      filter: blur(20px);
+      opacity: 0.72;
+      animation: closing-laser-fog 7.8s ease-in-out infinite alternate;
+    }
+
+    .manifesto-line {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.68rem;
+      min-height: 12.8rem;
+      padding: 1.08rem 1.08rem 1.18rem;
+      border: 1px solid rgba(123, 139, 255, 0.24);
+      border-radius: 1.45rem;
+      background: linear-gradient(180deg, rgba(10, 17, 38, 0.88), rgba(7, 12, 28, 0.82));
+      box-shadow: 0 22px 44px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .manifesto-line::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(180deg, rgba(174, 182, 255, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(111, 123, 255, 0.12), transparent 28%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .manifesto-line > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .manifesto-line > div:last-child {
+      display: flex;
+      flex-direction: column;
+      gap: 0.34rem;
+    }
+
+    .manifesto-no {
+      color: rgba(162, 172, 255, 0.88);
+      font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+      line-height: 1;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .closing-manifesto strong {
+      display: block;
+      margin-bottom: 0;
+    }
+
+
+    /* Dark technical Vanta redesign */
+    :root {
+      --bg: #050b18;
+      --bg-soft: #091224;
+      --bg-strong: #0f1a31;
+      --surface: rgba(7, 15, 31, 0.74);
+      --surface-strong: rgba(10, 18, 38, 0.9);
+      --surface-tint-blue: rgba(122, 162, 255, 0.14);
+      --surface-tint-teal: rgba(41, 230, 151, 0.14);
+      --ink: #f4f8ff;
+      --muted: #a2b3d4;
+      --soft: #66769a;
+      --line: rgba(118, 145, 205, 0.16);
+      --line-strong: rgba(41, 230, 151, 0.32);
+      --blue: #7aa2ff;
+      --blue-deep: #d8e6ff;
+      --teal: #29e697;
+      --teal-deep: #98f7cd;
+      --purple: #93a8ff;
+      --peach: #7bdcc3;
+      --blue-fog: rgba(122, 162, 255, 0.18);
+      --teal-fog: rgba(41, 230, 151, 0.16);
+      --shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.26);
+      --shadow-md: 0 22px 56px rgba(0, 0, 0, 0.34);
+      --shadow-lg: 0 34px 82px rgba(0, 0, 0, 0.42);
+      --part-jump-menu-bg: rgba(8, 16, 34, 0.82);
+      --part-jump-menu-bg-soft: rgba(11, 23, 48, 0.74);
+      --part-jump-menu-line: rgba(109, 142, 219, 0.18);
+      --part-jump-menu-text: var(--ink);
+      --part-jump-menu-text-soft: var(--muted);
+      --part-jump-menu-shadow: 0 22px 52px rgba(0, 0, 0, 0.34);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 50% -10%, rgba(63, 91, 185, 0.28), rgba(63, 91, 185, 0) 28%),
+        radial-gradient(circle at 84% 16%, rgba(41, 230, 151, 0.10), rgba(41, 230, 151, 0) 22%),
+        linear-gradient(180deg, #040814 0%, #06101e 44%, #081528 100%);
+      color: var(--ink);
+    }
+
+    body::before {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 24%),
+        radial-gradient(circle at 16% 20%, rgba(122, 162, 255, 0.08), rgba(122, 162, 255, 0) 20%);
+      opacity: 0.92;
+      filter: blur(2px);
+    }
+
+    body::after {
+      background: linear-gradient(180deg, rgba(4, 8, 20, 0) 0%, rgba(4, 8, 20, 0.26) 34%, rgba(4, 8, 20, 0.62) 100%);
+      inset: 0;
+      height: auto;
+      filter: none;
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    #deck {
+      z-index: 2;
+    }
+
+    #deck::before {
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(122, 162, 255, 0.10), transparent 18%),
+        radial-gradient(circle at 82% 24%, rgba(41, 230, 151, 0.08), transparent 16%),
+        radial-gradient(circle at 50% 74%, rgba(122, 162, 255, 0.08), transparent 24%);
+      filter: blur(54px);
+      opacity: 0.78;
+      animation: deck-glow-drift 18s ease-in-out infinite alternate;
+    }
+
+    #deck::after {
+      background-image:
+        linear-gradient(180deg, rgba(4, 8, 20, 0.08), rgba(4, 8, 20, 0.34)),
+        linear-gradient(rgba(118, 145, 205, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(118, 145, 205, 0.05) 1px, transparent 1px);
+      background-size: auto, 88px 88px, 88px 88px;
+      background-position: center;
+      opacity: 0.52;
+      filter: none;
+      animation: none;
+    }
+
+    @keyframes deck-glow-drift {
+      0% { transform: translate3d(-1vw, -1vh, 0) scale(1); }
+      50% { transform: translate3d(1.2vw, 1vh, 0) scale(1.05); }
+      100% { transform: translate3d(-0.5vw, 1.8vh, 0) scale(1.02); }
+    }
+
+    #vantaNetBg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background: linear-gradient(180deg, #060b17 0%, #091427 100%);
+    }
+
+    #vantaNetBg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 22%),
+        linear-gradient(180deg, rgba(6, 11, 23, 0.14), rgba(6, 11, 23, 0.38) 42%, rgba(6, 11, 23, 0.68) 100%);
+      opacity: 0.48;
+      pointer-events: none;
+      transition: opacity 400ms ease;
+    }
+
+    body.vanta-active #vantaNetBg::after {
+      opacity: 0.22;
+    }
+
+    #vantaNetBg canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      opacity: 0.96;
+    }
+
+    .chrome-pill,
+    .hero-tag,
+    .micro-tag,
+    .foundation-chip,
+    .keyboard-key,
+    .core-links span,
+    .pipeline-input,
+    .pipeline-output,
+    .accel-workbench,
+    .workflow-main-step,
+    .workflow-node,
+    .accel-step,
+    .pillar,
+    .side-item,
+    .core-stage,
+    .method-list,
+    .stage-block,
+    .statement-card {
+      background: linear-gradient(180deg, rgba(10, 18, 37, 0.82), rgba(7, 13, 28, 0.74));
+      border-color: rgba(118, 145, 205, 0.16);
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .section-copy,
+    .cover-hero-panel,
+    .focus-shell,
+    .comparison-focus,
+    .assistant-focus,
+    .research-focus,
+    .closing-statement {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border: 1px solid rgba(118, 145, 205, 0.18);
+      background: linear-gradient(180deg, rgba(8, 15, 31, 0.78), rgba(6, 12, 26, 0.68));
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .section-copy::before,
+    .cover-hero-panel::before,
+    .focus-shell::before,
+    .comparison-focus::before,
+    .assistant-focus::before,
+    .research-focus::before,
+    .closing-statement::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top right, rgba(41, 230, 151, 0.12), transparent 22%),
+        radial-gradient(circle at bottom left, rgba(122, 162, 255, 0.12), transparent 30%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .section-copy > *,
+    .cover-hero-panel > *,
+    .focus-shell > *,
+    .comparison-focus > *,
+    .assistant-focus > *,
+    .research-focus > *,
+    .closing-statement > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-copy {
+      max-width: min(34rem, 100%);
+      padding: 1rem 1.25rem 1.1rem;
+      border-radius: 1.5rem;
+      align-self: flex-start;
+    }
+
+    .cover-center {
+      min-height: calc(100vh - (var(--slide-padding) * 2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-hero-panel {
+      width: min(100%, 920px);
+      padding: clamp(1.8rem, 4vw, 3rem);
+      border-radius: 2.4rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg), 0 0 56px rgba(41, 230, 151, 0.08);
+    }
+
+    .cover-center .hero-copy {
+      align-items: center;
+      text-align: center;
+      gap: 0.95rem;
+    }
+
+    .cover-center h1,
+    .cover-center .lead,
+    .cover-center .page-rule {
+      margin-inline: auto;
+    }
+
+    .cover-center .hero-meta {
+      justify-content: center;
+    }
+
+    .cover-center .eyebrow {
+      justify-content: center;
+      color: rgba(216, 230, 255, 0.8);
+    }
+
+    .website-hero,
+    .section-hero,
+    .anchor-panel,
+    .support-stack,
+    .assistant-main,
+    .research-board {
+      position: relative;
+      z-index: 1;
+    }
+
+    .website-hero,
+    .section-hero {
+      display: flex;
+      flex-direction: column;
+      gap: 0.82rem;
+    }
+
+    .signal-strip {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      color: rgba(171, 194, 238, 0.78);
+      font-size: calc(var(--small-size) + 0.02rem);
+      letter-spacing: 0.04em;
+    }
+
+    .signal-pill,
+    .rail-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0.34rem 0.76rem;
+      border-radius: 999px;
+      border: 1px solid rgba(118, 145, 205, 0.18);
+      background: rgba(9, 18, 37, 0.84);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .signal-copy {
+      color: rgba(171, 194, 238, 0.74);
+      line-height: 1.4;
+    }
+
+    .section-hero {
+      max-width: min(38rem, 100%);
+      gap: 0.72rem;
+      padding: 1rem 1.22rem 1.15rem;
+    }
+
+    .section-copy.section-hero {
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-radius: 0;
+      overflow: visible;
+      padding: 0;
+      max-width: min(38rem, 100%);
+    }
+
+    .section-copy.section-hero::before {
+      display: none;
+    }
+
+    .section-hero h1,
+    .section-hero h2 {
+      max-width: 15ch;
+      letter-spacing: -0.035em;
+      line-height: 1.02;
+    }
+
+    .slide[data-title="启动速度"] .section-hero .lead {
+      max-width: none;
+      white-space: nowrap;
+    }
+
+    .section-actions,
+    .capability-rail {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.52rem;
+    }
+
+    .section-actions {
+      margin-top: 0.05rem;
+    }
+
+    .hero-meta .hero-tag,
+    .section-actions .micro-tag,
+    .foundation-chip {
+      background: rgba(10, 20, 40, 0.84);
+      border-color: rgba(118, 145, 205, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .hero-meta .hero-tag:first-child,
+    .section-actions .micro-tag:first-child,
+    .capability-rail .rail-chip:first-child {
+      background: linear-gradient(135deg, rgba(41, 230, 151, 0.98), rgba(122, 162, 255, 0.94));
+      color: #04101f;
+      border-color: rgba(41, 230, 151, 0.22);
+      box-shadow: 0 10px 24px rgba(41, 230, 151, 0.18);
+    }
+
+    .anchor-panel {
+      position: relative;
+      z-index: 1;
+    }
+
+    .capability-rail {
+      margin-bottom: 0.95rem;
+    }
+
+    .rail-chip {
+      min-height: 1.9rem;
+      padding-inline: 0.7rem;
+      font-size: calc(var(--small-size) + 0.01rem);
+      background: rgba(10, 21, 42, 0.72);
+    }
+
+    .slide[data-title="启动速度"] .accel-stage {
+      gap: 0.72rem;
+    }
+
+    .slide[data-title="启动速度"] .accel-pipeline--flow {
+      grid-template-columns: minmax(176px, 0.82fr) minmax(88px, 0.28fr) minmax(0, 1.5fr) minmax(88px, 0.28fr) minmax(188px, 0.9fr);
+      align-items: center;
+      gap: clamp(0.5rem, 0.85vw, 0.9rem);
+      width: 100%;
+    }
+
+    .slide[data-title="启动速度"] .pipeline-input,
+    .slide[data-title="启动速度"] .pipeline-output {
+      width: 100%;
+      min-height: 5.6rem;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+    }
+
+    .slide[data-title="启动速度"] .pipeline-beam--flow {
+      position: relative;
+      width: 100%;
+      min-width: 5rem;
+      height: 2.8rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at center, rgba(122, 162, 255, 0.7) 0 1.9px, transparent 2.7px) 0 50% / 1.4rem 100% repeat-x;
+      animation: accel-flow-particles 1.8s linear infinite;
+      will-change: background-position;
+    }
+
+    .slide[data-title="启动速度"] .pipeline-beam--flow::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0.06), rgba(122, 162, 255, 0.44) 18%, rgba(41, 230, 151, 0.9) 50%, rgba(122, 162, 255, 0.44) 82%, rgba(122, 162, 255, 0.06));
+      box-shadow: 0 0 18px rgba(41, 230, 151, 0.14);
+      opacity: 0.88;
+    }
+
+    .slide[data-title="启动速度"] .pipeline-beam--flow::after {
+      content: "";
+      position: absolute;
+      inset: calc(50% - 0.72rem) auto auto -24%;
+      width: 46%;
+      height: 1.44rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0), rgba(122, 162, 255, 0.16) 24%, rgba(41, 230, 151, 0.94) 55%, rgba(122, 162, 255, 0.18) 78%, rgba(122, 162, 255, 0));
+      filter: blur(1.5px);
+      animation: accel-flow-sweep 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+      will-change: transform;
+    }
+
+    .slide[data-title="启动速度"] .accel-workbench {
+      padding: 0.82rem 0.86rem 0.9rem;
+    }
+
+    .slide[data-title="启动速度"] .accel-workbench::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0) 0%, rgba(122, 162, 255, 0.06) 26%, rgba(41, 230, 151, 0.12) 48%, rgba(122, 162, 255, 0.06) 72%, rgba(122, 162, 255, 0) 100%);
+      transform: translateX(-58%);
+      animation: accel-workbench-scan 3.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .slide[data-title="启动速度"] .accel-rail {
+      padding-top: 1.05rem;
+    }
+
+    .slide[data-title="启动速度"] .accel-rail::after {
+      content: "";
+      position: absolute;
+      left: 0.95rem;
+      top: -0.35rem;
+      width: 4.2rem;
+      height: 0.85rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0), rgba(122, 162, 255, 0.22), rgba(41, 230, 151, 0.8), rgba(122, 162, 255, 0));
+      filter: blur(2px);
+      animation: accel-rail-scan 2.2s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes accel-flow-particles {
+      from {
+        background-position: 0 50%;
+      }
+      to {
+        background-position: 1.4rem 50%;
+      }
+    }
+
+    @keyframes accel-flow-sweep {
+      0% {
+        transform: translate3d(0, 0, 0) scaleX(0.92);
+        opacity: 0;
+      }
+      12% {
+        opacity: 0.96;
+      }
+      88% {
+        opacity: 0.96;
+      }
+      100% {
+        transform: translate3d(320%, 0, 0) scaleX(1.08);
+        opacity: 0;
+      }
+    }
+
+    @keyframes accel-workbench-scan {
+      0% {
+        transform: translate3d(-62%, 0, 0);
+        opacity: 0;
+      }
+      14% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(68%, 0, 0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes accel-rail-scan {
+      from {
+        transform: translate3d(0, 0, 0);
+      }
+      to {
+        transform: translate3d(calc(100% - 6.1rem), 0, 0);
+      }
+    }
+
+    .eyebrow,
+    .section-label,
+    .side-label,
+    .statement-kicker,
+    .pipeline-label,
+    .main-step-no,
+    .step-no,
+    .node-no,
+    .stage-kicker,
+    .core-eyebrow,
+    .chrome-label {
+      color: rgba(171, 194, 238, 0.76);
+    }
+
+    .eyebrow::before,
+    .page-rule {
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0), rgba(122, 162, 255, 0.56), rgba(41, 230, 151, 0.8));
+    }
+
+    .hero-tag,
+    .micro-tag,
+    .foundation-chip,
+    .core-links span {
+      color: var(--ink);
+    }
+
+    h1,
+    h2,
+    h3,
+    .step-title,
+    .node-title,
+    .main-step-title,
+    .pipeline-title,
+    .core-title,
+    .method-tag,
+    .method-main,
+    .workflow-foot strong,
+    .accent-note,
+    .method-takeaway,
+    .statement-card strong,
+    .closing-manifesto strong {
+      color: var(--ink);
+    }
+
+    p,
+    li,
+    .lead,
+    .step-note,
+    .node-note,
+    .main-step-note,
+    .core-note,
+    .pipeline-output p,
+    .pipeline-input p {
+      color: var(--muted);
+    }
+
+    .chrome-pill {
+      background: rgba(9, 17, 34, 0.72);
+      border-color: rgba(118, 145, 205, 0.18);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .keyboard-key {
+      background: rgba(16, 27, 52, 0.9);
+      color: var(--ink);
+    }
+
+    .nav-dot {
+      background: rgba(122, 162, 255, 0.16);
+    }
+
+    .nav-dot:hover,
+    .nav-dot:focus-visible {
+      background: rgba(122, 162, 255, 0.42);
+    }
+
+    .nav-dot.active {
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      box-shadow: 0 0 14px rgba(41, 230, 151, 0.22);
+    }
+
+    .focus-shell,
+    .comparison-focus,
+    .assistant-focus,
+    .research-focus,
+    .closing-statement {
+      border-radius: 2rem;
+    }
+
+    .focus-shell--accel,
+    .focus-shell--workflow,
+    .focus-shell--roadmap,
+    .focus-core {
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(41, 230, 151, 0.06);
+    }
+
+    .comparison-focus,
+    .assistant-focus,
+    .research-focus,
+    .closing-statement {
+      padding: clamp(1rem, 2vw, 1.35rem);
+    }
+
+    .comparison-focus::after {
+      display: none;
+    }
+
+    .comparison-focus .quiet-split {
+      margin-top: 0;
+      gap: 1rem;
+    }
+
+    .comparison-focus .pillar {
+      min-height: clamp(300px, 44vh, 380px);
+      padding: 1.15rem 1.2rem 1.08rem;
+    }
+
+    .assistant-focus {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .support-stack {
+      display: grid;
+      gap: 0.78rem;
+    }
+
+    .assistant-main {
+      display: grid;
+      gap: 0.86rem;
+      min-width: 0;
+    }
+
+    .assistant-focus .side-item {
+      min-height: unset;
+      padding: 0.9rem 0.95rem 0.95rem;
+    }
+
+    .assistant-flow-stage {
+      grid-template-columns: minmax(220px, 0.8fr) minmax(76px, 0.22fr) minmax(300px, 1.08fr) minmax(76px, 0.22fr) minmax(220px, 0.86fr);
+      align-items: center;
+      gap: clamp(0.5rem, 0.8vw, 0.88rem);
+    }
+
+    .assistant-flow-stage .support-stack--inputs,
+    .assistant-flow-stage .support-stack--outputs {
+      align-content: center;
+    }
+
+    .assistant-flow-stage .output-rail {
+      grid-template-columns: 1fr;
+    }
+
+    .assistant-beam {
+      position: relative;
+      width: 100%;
+      min-width: 4.8rem;
+      height: 3rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at center, rgba(122, 162, 255, 0.68) 0 1.8px, transparent 2.8px) 0 50% / 1.25rem 100% repeat-x;
+      animation: assistant-flow-particles 1.8s linear infinite;
+      will-change: background-position;
+    }
+
+    .assistant-beam::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0.05), rgba(122, 162, 255, 0.42) 18%, rgba(41, 230, 151, 0.92) 50%, rgba(122, 162, 255, 0.42) 82%, rgba(122, 162, 255, 0.05));
+      box-shadow: 0 0 18px rgba(41, 230, 151, 0.14);
+      opacity: 0.92;
+    }
+
+    .assistant-beam::after {
+      content: "";
+      position: absolute;
+      inset: calc(50% - 0.74rem) auto auto -25%;
+      width: 48%;
+      height: 1.48rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0), rgba(122, 162, 255, 0.18) 24%, rgba(41, 230, 151, 0.96) 54%, rgba(122, 162, 255, 0.18) 78%, rgba(122, 162, 255, 0));
+      filter: blur(1.5px);
+      animation: assistant-flow-sweep 2.35s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+      will-change: transform;
+    }
+
+    .assistant-beam--out {
+      animation-delay: 0.15s;
+    }
+
+    .assistant-beam--out::after {
+      animation-delay: 0.38s;
+    }
+
+    .assistant-flow-stage .focus-core {
+      min-height: clamp(300px, 44vh, 380px);
+    }
+
+    .assistant-flow-stage .focus-core::before {
+      inset: 0;
+      width: auto;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0) 0%, rgba(122, 162, 255, 0.08) 20%, rgba(41, 230, 151, 0.18) 48%, rgba(122, 162, 255, 0.08) 82%, rgba(122, 162, 255, 0) 100%);
+      opacity: 0;
+      transform: translate3d(-62%, 0, 0);
+      animation: assistant-core-scan 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+      pointer-events: none;
+    }
+
+    .assistant-flow-stage .support-stack--outputs .side-item {
+      animation: assistant-output-pulse 3s ease-in-out infinite;
+    }
+
+    .assistant-flow-stage .support-stack--outputs .side-item:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .assistant-flow-stage .support-stack--outputs .side-item:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    .output-rail {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.78rem;
+    }
+
+    @keyframes assistant-flow-particles {
+      from {
+        background-position: 0 50%;
+      }
+      to {
+        background-position: 1.25rem 50%;
+      }
+    }
+
+    @keyframes assistant-flow-sweep {
+      0% {
+        transform: translate3d(0, 0, 0) scaleX(0.92);
+        opacity: 0;
+      }
+      12% {
+        opacity: 0.96;
+      }
+      88% {
+        opacity: 0.96;
+      }
+      100% {
+        transform: translate3d(310%, 0, 0) scaleX(1.06);
+        opacity: 0;
+      }
+    }
+
+    @keyframes assistant-core-scan {
+      0% {
+        transform: translate3d(-62%, 0, 0);
+        opacity: 0;
+      }
+      14% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(72%, 0, 0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes assistant-output-pulse {
+      0%, 100% {
+        border-color: rgba(118, 145, 205, 0.16);
+        box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      }
+      45% {
+        border-color: rgba(41, 230, 151, 0.22);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(41, 230, 151, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+    }
+
+    .focus-core {
+      background: linear-gradient(180deg, rgba(12, 24, 52, 0.94), rgba(8, 17, 36, 0.86));
+      border-color: rgba(41, 230, 151, 0.18);
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(41, 230, 151, 0.08), 0 0 64px rgba(41, 230, 151, 0.08);
+    }
+
+    .core-stage::after {
+      border-color: rgba(122, 162, 255, 0.12);
+      background: linear-gradient(135deg, rgba(122, 162, 255, 0.08), rgba(41, 230, 151, 0.04), rgba(255, 255, 255, 0));
+    }
+
+    .research-focus {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .research-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(250px, 0.82fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .research-focus .method-list {
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+      padding: 0;
+    }
+
+    .method-row {
+      border-bottom-color: rgba(118, 145, 205, 0.12);
+    }
+
+    .method-value {
+      color: var(--teal-deep);
+    }
+
+    .decision-card {
+      width: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.78rem;
+      padding: 1rem 1.08rem 1.08rem;
+    }
+
+    .decision-card .statement-kicker {
+      margin-bottom: -0.1rem;
+    }
+
+    .decision-card p {
+      margin: 0;
+    }
+
+    .decision-card .section-actions {
+      margin-top: auto;
+    }
+
+    .method-takeaway {
+      margin: 0;
+      max-width: none;
+      padding: 1rem 1.15rem;
+      border-radius: 1.35rem;
+      background: linear-gradient(135deg, rgba(12, 27, 58, 0.92), rgba(8, 18, 39, 0.82));
+      border: 1px solid rgba(41, 230, 151, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .roadmap-shell--staircase {
+      padding: 0.2rem 0.15rem 0.35rem;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      overflow: visible;
+      justify-self: center;
+      margin-inline: auto;
+    }
+
+    .roadmap-shell--staircase::before {
+      display: none;
+    }
+
+    .roadmap-shell--staircase .step-band--staircase {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(1.6rem, 2.2vw, 2.4rem);
+      min-height: clamp(360px, 50vh, 430px);
+      overflow: visible;
+      align-items: stretch;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .roadmap-shell--staircase .step-band--staircase::before {
+      display: none;
+    }
+
+    .roadmap-shell--staircase .roadmap-curve {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 0;
+      transform: translateY(0.15rem);
+    }
+
+    .roadmap-shell--staircase .roadmap-curve path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .roadmap-shell--staircase .roadmap-curve .curve-base {
+      stroke: rgba(145, 156, 255, 0.14);
+      stroke-width: 5;
+    }
+
+    .roadmap-shell--staircase .roadmap-curve .curve-glow {
+      stroke: rgba(169, 116, 255, 0.28);
+      stroke-width: 10;
+      filter: blur(5px);
+      opacity: 0.68;
+    }
+
+    .roadmap-shell--staircase .roadmap-curve .curve-flow {
+      stroke: url(#roadmapCurveGradient);
+      stroke-width: 4;
+      stroke-dasharray: 18 14;
+      animation: roadmap-curve-flow 2.4s linear infinite;
+    }
+
+    .roadmap-shell--staircase .step-segment {
+      min-height: unset;
+      overflow: visible;
+      z-index: 2;
+      align-items: start;
+    }
+
+    .roadmap-shell--staircase .step-segment--1 {
+      padding-top: clamp(7.6rem, 13vh, 9rem);
+    }
+
+    .roadmap-shell--staircase .step-segment--2 {
+      padding-top: clamp(3.8rem, 6.5vh, 4.8rem);
+    }
+
+    .roadmap-shell--staircase .step-segment--3 {
+      padding-top: 0;
+    }
+
+    .roadmap-shell--staircase .stage-block {
+      min-height: clamp(214px, 28vh, 236px);
+      border-radius: 1.7rem;
+      padding: 1.15rem 1.05rem 1.12rem;
+      transform: none;
+      color: rgba(242, 246, 255, 0.98);
+      border-color: rgba(160, 177, 255, 0.16);
+      background: linear-gradient(180deg, rgba(15, 25, 54, 0.92), rgba(10, 16, 34, 0.88));
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.26);
+      opacity: 1;
+      isolation: isolate;
+      z-index: 2;
+    }
+
+    .roadmap-shell--staircase .stage-block::before {
+      inset: auto 0 0 0;
+      width: auto;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.64), rgba(255,255,255,0));
+      opacity: 0.36;
+    }
+
+    .roadmap-shell--staircase .stage-block::after {
+      inset: 0;
+      height: auto;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 40%, rgba(14, 12, 36, 0.22) 100%);
+      opacity: 1;
+    }
+
+    .roadmap-shell--staircase .stage-block.stage-1 {
+      background: linear-gradient(180deg, rgba(137, 160, 255, 0.30), rgba(90, 110, 203, 0.18) 58%, rgba(10, 16, 34, 0.92));
+      border-color: rgba(166, 186, 255, 0.18);
+      box-shadow: 0 18px 34px rgba(34, 42, 78, 0.24);
+    }
+
+    .roadmap-shell--staircase .stage-block.stage-2 {
+      background: linear-gradient(180deg, rgba(121, 122, 255, 0.42), rgba(111, 78, 235, 0.26) 60%, rgba(11, 14, 36, 0.94));
+      border-color: rgba(160, 146, 255, 0.22);
+      box-shadow: 0 22px 42px rgba(47, 37, 96, 0.28);
+    }
+
+    .roadmap-shell--staircase .stage-block.stage-3 {
+      background: linear-gradient(180deg, rgba(144, 92, 255, 0.82), rgba(109, 55, 240, 0.56) 62%, rgba(12, 12, 32, 0.98));
+      border-color: rgba(201, 143, 255, 0.34);
+      box-shadow: 0 30px 58px rgba(76, 44, 181, 0.40), 0 0 0 1px rgba(192, 134, 255, 0.12), 0 0 58px rgba(140, 91, 255, 0.26);
+    }
+
+    .roadmap-shell--staircase .stage-block.is-on.stage-1 {
+      box-shadow: 0 24px 42px rgba(41, 57, 112, 0.28), 0 0 0 1px rgba(176, 193, 255, 0.12);
+    }
+
+    .roadmap-shell--staircase .stage-block.is-on.stage-2 {
+      box-shadow: 0 28px 48px rgba(60, 45, 132, 0.34), 0 0 0 1px rgba(169, 154, 255, 0.14), 0 0 28px rgba(136, 111, 255, 0.16);
+    }
+
+    .roadmap-shell--staircase .stage-block.is-on.stage-3 {
+      border-color: rgba(214, 156, 255, 0.42);
+      box-shadow: 0 34px 66px rgba(86, 48, 193, 0.46), 0 0 0 1px rgba(208, 149, 255, 0.16), 0 0 78px rgba(148, 96, 255, 0.34);
+      transform: translateY(-0.2rem);
+    }
+
+    .roadmap-shell--staircase .stage-kicker,
+    .roadmap-shell--staircase .stage-block p {
+      color: rgba(227, 233, 255, 0.80);
+    }
+
+    .roadmap-shell--staircase .stage-block h3 {
+      color: rgba(248, 250, 255, 0.98);
+      letter-spacing: -0.03em;
+    }
+
+    @keyframes roadmap-curve-flow {
+      from {
+        stroke-dashoffset: 0;
+      }
+      to {
+        stroke-dashoffset: -64;
+      }
+    }
+
+    @keyframes closing-laser-drift {
+      0%,
+      100% {
+        transform: translateY(-50%) translateX(-1.4%);
+      }
+      50% {
+        transform: translateY(-50%) translateX(1.4%);
+      }
+    }
+
+    @keyframes closing-laser-sweep {
+      0% {
+        transform: translateX(-16%) skewX(-18deg);
+        opacity: 0;
+      }
+      14% {
+        opacity: 0.86;
+      }
+      52% {
+        opacity: 0.92;
+      }
+      100% {
+        transform: translateX(16%) skewX(-18deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes closing-laser-fog {
+      0% {
+        transform: translate3d(-1.5%, 0, 0) scale(0.98);
+        opacity: 0.52;
+      }
+      50% {
+        opacity: 0.74;
+      }
+      100% {
+        transform: translate3d(1.5%, -4%, 0) scale(1.04);
+        opacity: 0.6;
+      }
+    }
+
+    .workflow-main-step::before,
+    .statement-card::before,
+    .accel-shell::before,
+    .workflow-shell::before,
+    .roadmap-shell::before,
+    .pipeline-input::before,
+    .pipeline-output::before,
+    .accel-workbench::before,
+    .core-stage::after {
+      opacity: 1;
+    }
+
+    .workflow-main-step::before,
+    .statement-card::before,
+    .accel-shell::before,
+    .workflow-shell::before,
+    .roadmap-shell::before,
+    .pipeline-input::before,
+    .pipeline-output::before,
+    .accel-workbench::before {
+      background: linear-gradient(135deg, rgba(41, 230, 151, 0.10), rgba(255, 255, 255, 0) 48%, rgba(122, 162, 255, 0.12));
+    }
+
+    .pipeline-beam,
+    .workflow-assistline::before,
+    .accel-rail::before,
+    .step-band::before {
+      background: linear-gradient(90deg, rgba(122, 162, 255, 0.08), rgba(122, 162, 255, 0.26), rgba(41, 230, 151, 0.22));
+    }
+
+    .accel-progress-line,
+    .workflow-progress-line,
+    .foundation-fill {
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      box-shadow: 0 0 16px rgba(41, 230, 151, 0.18);
+    }
+
+    .accel-step::before,
+    .workflow-node::after {
+      background: rgba(8, 15, 31, 0.96);
+      border-color: rgba(118, 145, 205, 0.22);
+      box-shadow: 0 0 0 6px rgba(5, 11, 24, 0.9);
+    }
+
+    .accel-step.is-on,
+    .workflow-node.is-on,
+    .stage-block.is-on {
+      background: linear-gradient(180deg, rgba(13, 28, 58, 0.96), rgba(8, 18, 39, 0.88));
+      border-color: rgba(41, 230, 151, 0.24);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(41, 230, 151, 0.06);
+    }
+
+    .accel-step.is-on::before,
+    .workflow-node.is-on::after {
+      background: linear-gradient(180deg, var(--teal), var(--blue));
+      border-color: rgba(41, 230, 151, 0.16);
+      box-shadow: 0 0 0 8px rgba(5, 11, 24, 0.92), 0 0 18px rgba(41, 230, 151, 0.16);
+    }
+
+    .pillar-foot,
+    .foundation-band,
+    .manifesto-line {
+      border-color: rgba(118, 145, 205, 0.14);
+    }
+
+    .pillar-no,
+    .manifesto-no {
+      color: rgba(122, 146, 196, 0.38);
+    }
+
+    .closing-stage--single {
+      grid-template-columns: 1fr;
+    }
+
+    .closing-statement {
+      max-width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .closing-intro {
+      margin-bottom: 1rem;
+    }
+
+    .closing-statement .closing-copy {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .closing-statement .lead,
+    .closing-statement .page-rule,
+    .closing-statement .closing-manifesto {
+      margin-inline: 0;
+    }
+
+    .closing-statement .closing-manifesto {
+      width: 100%;
+    }
+
+    .cover-hero-panel .signal-strip,
+    .cover-hero-panel .section-actions {
+      justify-content: center;
+    }
+
+    .workflow-foot strong,
+    .method-takeaway,
+    .accent-note {
+      color: var(--ink);
+    }
+
+    @media (max-width: 1024px) {
+      .comparison-focus::after {
+        display: none;
+      }
+
+      .cover-center {
+        min-height: auto;
+      }
+
+      .assistant-focus,
+      .research-board,
+      .output-rail {
+        grid-template-columns: 1fr;
+      }
+
+      .roadmap-shell--staircase .step-band--staircase {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .roadmap-shell--staircase .step-segment--1,
+      .roadmap-shell--staircase .step-segment--2,
+      .roadmap-shell--staircase .step-segment--3 {
+        padding-top: 0;
+      }
+
+      .assistant-flow-stage {
+        grid-template-columns: 1fr;
+      }
+
+      .assistant-flow-stage .assistant-beam {
+        display: none;
+      }
+
+      .slide[data-title="启动速度"] .accel-pipeline--flow {
+        grid-template-columns: 1fr;
+      }
+
+      .slide[data-title="启动速度"] .pipeline-beam--flow {
+        min-height: 2.2rem;
+      }
+
+      .closing-statement .closing-copy {
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .quiet-grid,
+      .closing-stage {
+        grid-template-columns: 1fr;
+      }
+
+      .quiet-split,
+      .assistant-stage,
+      .step-band,
+      .workflow-mainline,
+      .workflow-assistline,
+      .accel-rail,
+      .method-row {
+        grid-template-columns: 1fr;
+      }
+
+      .step-band {
+        flex-direction: column;
+        min-height: unset;
+      }
+
+      .step-segment {
+        min-height: unset;
+      }
+
+      .step-segment + .step-segment .stage-block,
+      .step-segment:not(:last-child) .stage-block {
+        border-top-left-radius: calc(var(--radius-md) + 0.15rem);
+        border-top-right-radius: calc(var(--radius-md) + 0.15rem);
+      }
+
+      .accel-rail::before,
+      .workflow-assistline::before,
+      .accel-progress-line,
+      .workflow-progress-line {
+        left: 0.45rem;
+        right: auto;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        height: auto;
+        transform: none;
+      }
+
+      .accel-progress-line {
+        height: calc(var(--accel-progress) * 1%);
+      }
+
+      .workflow-progress-line {
+        height: calc(var(--flow-progress) * 1%);
+      }
+
+      .accel-workbench {
+        padding: 0.9rem 0.9rem 1rem;
+      }
+
+      .accel-step::before {
+        left: 0.1rem;
+        top: -0.42rem;
+      }
+
+      .workflow-node::before {
+        left: 0.35rem;
+      }
+
+      .workflow-node::after {
+        left: 0.01rem;
+      }
+
+      .method-value {
+        justify-self: start;
+        text-align: left;
+      }
+    }
+
+    @media (max-height: 720px) {
+      :root {
+        --slide-padding: clamp(0.9rem, 2.6vw, 1.7rem);
+        --content-gap: clamp(0.62rem, 1.2vw, 0.95rem);
+        --title-size: clamp(2rem, 4.8vw, 4rem);
+        --h2-size: clamp(1.3rem, 2.6vw, 2.3rem);
+        --body-size: clamp(0.82rem, 0.92vw, 0.92rem);
+      }
+
+      .core-stage,
+      .pillar,
+      .stage-block,
+      .accel-step,
+      .workflow-node {
+        min-height: unset;
+      }
+
+    }
+
+    @media (max-height: 640px) {
+      :root {
+        --slide-padding: clamp(0.72rem, 2vw, 1.2rem);
+        --content-gap: clamp(0.48rem, 0.9vw, 0.75rem);
+        --title-size: clamp(1.82rem, 4vw, 3.2rem);
+        --h2-size: clamp(1.15rem, 2.2vw, 1.9rem);
+        --small-size: 0.68rem;
+      }
+
+      .chrome {
+        padding: 0.7rem 0.8rem;
+      }
+
+      .chrome-pill {
+        min-height: 1.9rem;
+        padding: 0.4rem 0.72rem;
+      }
+
+      .signal-pill,
+      .rail-chip,
+      .hero-tag,
+      .micro-tag,
+      .foundation-chip {
+        min-height: 1.75rem;
+        padding: 0.28rem 0.58rem;
+      }
+
+      .capability-rail,
+      .section-actions {
+        gap: 0.38rem;
+      }
+
+      .statement-card,
+      .accel-shell,
+      .workflow-shell,
+      .roadmap-shell,
+      .pillar,
+      .core-stage,
+      .method-list {
+        border-radius: 1.35rem;
+      }
+
+      .roadmap-shell {
+        padding: 0.9rem 1rem;
+      }
+
+      .roadmap-grid {
+        min-height: 220px;
+      }
+
+      .stage-block {
+        padding: 0.92rem 0.9rem 0.95rem;
+        gap: 0.45rem;
+      }
+
+      .slide[data-title="启动速度"] .section-copy {
+        gap: 0.4rem;
+      }
+
+      .slide[data-title="启动速度"] .page-rule {
+        display: none;
+      }
+
+      .slide[data-title="启动速度"] .accel-shell {
+        padding: 0.7rem 0.76rem;
+      }
+
+      .slide[data-title="启动速度"] .accel-pipeline--flow {
+        gap: 0.42rem;
+      }
+
+      .slide[data-title="启动速度"] .pipeline-beam--flow {
+        height: 1.8rem;
+      }
+
+      .slide[data-title="启动速度"] .pipeline-input,
+      .slide[data-title="启动速度"] .pipeline-output {
+        padding: 0.56rem 0.78rem 0.58rem;
+      }
+
+      .slide[data-title="启动速度"] .pipeline-output p,
+      .slide[data-title="启动速度"] .step-note {
+        display: none;
+      }
+
+      .slide[data-title="启动速度"] .accel-step {
+        min-height: 64px;
+        gap: 0.16rem;
+      }
+    }
+
+    @media (max-height: 560px) {
+      .keyboard-hint {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+        scroll-behavior: auto !important;
+      }
+
+      .slide[data-title="启动速度"] .pipeline-beam--flow,
+      .slide[data-title="启动速度"] .pipeline-beam--flow::after,
+      .slide[data-title="启动速度"] .accel-workbench::after,
+      .slide[data-title="启动速度"] .accel-rail::after,
+      .assistant-beam,
+      .assistant-beam::after,
+      .assistant-flow-stage .focus-core::before,
+      .assistant-flow-stage .support-stack--outputs .side-item,
+      .roadmap-shell--staircase .roadmap-curve .curve-flow,
+      .closing-laser-flow,
+      .closing-laser-flow::before,
+      .closing-laser-flow::after {
+        animation: none !important;
+      }
+    }
+
+    /* ── LaserFlow Three.js canvas – closing slide ─────────────────── */
+    .slide[data-title="结尾总结"] { isolation: isolate; }
+
+    #laser-flow-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: #03040e;
+    }
+
+    #laser-flow-bg canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+
+    .slide[data-title="结尾总结"] .slide-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .slide[data-title="结尾总结"] .closing-laser-flow {
+      display: none;
+    }
+  </style>
+</head>
+<body data-theme="intro">
+  <div id="vantaNetBg" aria-hidden="true"></div>
+  <div class="chrome" aria-hidden="true">
+    <div class="chrome-top">
+      <div class="chrome-cluster">
+        <div class="chrome-pill"><span class="chrome-label">章节</span><span class="chrome-value" id="sectionBadge">4.1 落地路线图</span></div>
+        <div class="chrome-pill"><span class="chrome-label">当前</span><span class="chrome-value" id="scopeBadge">封面</span></div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <div class="chrome-cluster">
+        <div class="chrome-pill" id="slideCounter">01 / 08</div>
+        <div class="chrome-pill keyboard-hint"><span class="keyboard-key">←</span><span class="keyboard-key">→</span><span>翻页</span></div>
+      </div>
+      <div class="nav-dots" id="navDots"></div>
+    </div>
+  </div>
+
+  <main id="deck">
+    <section class="slide" data-section="4.1 落地路线图" data-title="封面" data-theme="intro">
+      <div class="slide-content">
+        <div class="inner cover-center">
+          <div class="cover-hero-panel website-hero reveal-group">
+            <div class="signal-strip reveal" style="--delay:20ms">
+              <span class="signal-pill">第四部分</span>
+              <span class="signal-copy">从试点、工作流到团队基建</span>
+            </div>
+            <div class="hero-copy">
+              <h1 class="reveal" style="--delay:100ms">把 AI 纳入<br />工作流</h1>
+              <p class="lead reveal" style="--delay:170ms">让 AI 进入分析、可视化与决策，而不是停留在演示里。</p>
+              <div class="page-rule draw-in" style="--delay:240ms"></div>
+              <div class="hero-meta reveal" style="--delay:300ms">
+                <span class="hero-tag">从试点开始</span>
+                <span class="hero-tag">进入工作流</span>
+                <span class="hero-tag">沉淀团队能力</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.1 落地路线图" data-title="启动速度" data-theme="accel" data-motion="accel">
+      <div class="slide-content">
+        <div class="inner">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.1 / 核心判断</span>
+              <span class="signal-copy">从想法到第一版答案</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">AI 先改变的，是启动速度</h2>
+            <p class="lead reveal" style="--delay:170ms">小问题、重复任务、脑海里的想法，都能先做出来看。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">先做出来看</span>
+              <span class="micro-tag">先验证再深挖</span>
+            </div>
+          </div>
+          <div class="accel-shell focus-shell focus-shell--accel anchor-panel reveal" style="--delay:240ms">
+            <div class="accel-head">
+              <div>
+                <div class="section-label">从想法到初步答案</div>
+                <h3>先验证，再决定是否深挖</h3>
+              </div>
+            </div>
+            <div class="capability-rail reveal" style="--delay:280ms">
+              <span class="rail-chip">整理问题</span>
+              <span class="rail-chip">快速原型</span>
+              <span class="rail-chip">作图表达</span>
+              <span class="rail-chip">初步判断</span>
+            </div>
+            <div class="accel-stage">
+              <div class="accel-pipeline accel-pipeline--flow" id="accelTrack">
+                <div class="pipeline-input">
+                  <div class="pipeline-label">输入层</div>
+                  <div class="pipeline-title">想法 / 问题</div>
+                </div>
+                <div class="pipeline-beam pipeline-beam--flow"></div>
+                <div class="accel-workbench">
+                  <div class="workbench-head">
+                    <div>
+                      <div class="section-label">加速执行层</div>
+                      <h3>启动工作台</h3>
+                    </div>
+                  </div>
+                  <div class="accel-rail">
+                    <div class="accel-progress-line"></div>
+                    <div class="accel-step" data-step="0">
+                      <div class="step-no">01</div>
+                      <div class="step-title">整理</div>
+                      <div class="step-note">转成可操作输入</div>
+                    </div>
+                    <div class="accel-step" data-step="1">
+                      <div class="step-no">02</div>
+                      <div class="step-title">原型</div>
+                      <div class="step-note">先跑出第一版</div>
+                    </div>
+                    <div class="accel-step" data-step="2">
+                      <div class="step-no">03</div>
+                      <div class="step-title">作图</div>
+                      <div class="step-note">转成可讨论表达</div>
+                    </div>
+                    <div class="accel-step" data-step="3">
+                      <div class="step-no">04</div>
+                      <div class="step-title">初判</div>
+                      <div class="step-note">先判断是否继续</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pipeline-beam pipeline-beam--flow"></div>
+                <div class="pipeline-output">
+                  <div class="pipeline-label">输出层</div>
+                  <div class="pipeline-title">先得到可验证结果</div>
+                  <p>过去卡在启动，今天可以先验证。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.2 双主线" data-title="提效与创新" data-theme="intro">
+      <div class="slide-content">
+        <div class="inner">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.2 / 两条主线</span>
+              <span class="signal-copy">一条提效，一条创新</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">落地两条主线</h2>
+            <p class="lead reveal" style="--delay:170ms">一条提效，一条创新。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">日常生产力</span>
+              <span class="micro-tag">科研与决策</span>
+            </div>
+          </div>
+          <div class="comparison-focus anchor-panel">
+            <div class="quiet-split">
+              <article class="pillar reveal" data-kind="daily" style="--delay:260ms">
+                <div class="pillar-top">
+                  <div>
+                    <div class="section-label">日常方向</div>
+                    <h3>日常生产力</h3>
+                  </div>
+                  <div class="pillar-no">01</div>
+                </div>
+                <ul class="pillar-list">
+                  <li>整理资料</li>
+                  <li>分析数据</li>
+                  <li>生成图表</li>
+                </ul>
+                <div class="pillar-foot">
+                  <p>把时间还给判断、沟通和关键思考。</p>
+                </div>
+              </article>
+              <article class="pillar reveal" data-kind="research" style="--delay:340ms">
+                <div class="pillar-top">
+                  <div>
+                    <div class="section-label">科研方向</div>
+                    <h3>科研与决策</h3>
+                  </div>
+                  <div class="pillar-no">02</div>
+                </div>
+                <ul class="pillar-list">
+                  <li>快速验证</li>
+                  <li>多方法建模</li>
+                  <li>支撑判断</li>
+                </ul>
+                <div class="pillar-foot">
+                  <p>共同指向更高质量结果与更聪明决策。</p>
+                </div>
+              </article>
+            </div>
+            <div class="capability-rail reveal" style="--delay:380ms">
+              <span class="rail-chip">整理资料</span>
+              <span class="rail-chip">分析数据</span>
+              <span class="rail-chip">快速验证</span>
+              <span class="rail-chip">支撑决策</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.3 日常工作流" data-title="嵌入日常工作" data-theme="workflow" data-motion="workflow">
+      <div class="slide-content">
+        <div class="inner workflow-stage">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.3 / 日常方向</span>
+              <span class="signal-copy">把 AI 放进整条任务链</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">先把 AI 嵌进日常工作链</h2>
+            <p class="lead reveal" style="--delay:170ms">重点不是偶尔问一句，而是让 AI 进入整条任务链。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">资料摘要</span>
+              <span class="micro-tag">自动预处理</span>
+              <span class="micro-tag">初稿表达</span>
+            </div>
+          </div>
+          <div class="workflow-shell focus-shell focus-shell--workflow anchor-panel reveal" style="--delay:240ms">
+            <div class="workflow-head">
+              <div>
+                <div class="section-label">工作流视角</div>
+                <h3>把 AI 放进资料、清洗、分析、作图和汇报</h3>
+              </div>
+            </div>
+            <div class="capability-rail reveal" style="--delay:280ms">
+              <span class="rail-chip">摘要</span>
+              <span class="rail-chip">脚本</span>
+              <span class="rail-chip">初判</span>
+              <span class="rail-chip">表达</span>
+              <span class="rail-chip">初稿</span>
+            </div>
+            <div class="workflow-pipeline">
+              <div class="workflow-mainline">
+                <div class="workflow-main-step">
+                  <div class="main-step-no">01</div>
+                  <div class="main-step-title">资料</div>
+                  <div class="main-step-note">业务主流程</div>
+                </div>
+                <div class="workflow-main-step">
+                  <div class="main-step-no">02</div>
+                  <div class="main-step-title">清洗</div>
+                  <div class="main-step-note">业务主流程</div>
+                </div>
+                <div class="workflow-main-step">
+                  <div class="main-step-no">03</div>
+                  <div class="main-step-title">分析</div>
+                  <div class="main-step-note">业务主流程</div>
+                </div>
+                <div class="workflow-main-step">
+                  <div class="main-step-no">04</div>
+                  <div class="main-step-title">作图</div>
+                  <div class="main-step-note">业务主流程</div>
+                </div>
+                <div class="workflow-main-step">
+                  <div class="main-step-no">05</div>
+                  <div class="main-step-title">汇报</div>
+                  <div class="main-step-note">业务主流程</div>
+                </div>
+              </div>
+              <div class="workflow-assistline" id="workflowTrack">
+                <div class="workflow-progress-line"></div>
+                <div class="workflow-node" data-step="0">
+                  <div class="node-no">AI</div>
+                  <div class="node-title">摘要</div>
+                  <div class="node-note">快速进入上下文</div>
+                </div>
+                <div class="workflow-node" data-step="1">
+                  <div class="node-no">AI</div>
+                  <div class="node-title">脚本</div>
+                  <div class="node-note">自动化预处理</div>
+                </div>
+                <div class="workflow-node" data-step="2">
+                  <div class="node-no">AI</div>
+                  <div class="node-title">初判</div>
+                  <div class="node-note">辅助形成判断</div>
+                </div>
+                <div class="workflow-node" data-step="3">
+                  <div class="node-no">AI</div>
+                  <div class="node-title">表达</div>
+                  <div class="node-note">转成可讨论结果</div>
+                </div>
+                <div class="workflow-node" data-step="4">
+                  <div class="node-no">AI</div>
+                  <div class="node-title">初稿</div>
+                  <div class="node-note">生成第一版内容</div>
+                </div>
+              </div>
+            </div>
+            <div class="workflow-foot">
+              <strong>AI 的价值，在于进入整条任务链。</strong>
+              <p>先嵌进去，再逐步自动化。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.4 个人智能体" data-title="个人助手" data-theme="intro">
+      <div class="slide-content">
+        <div class="inner">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.4 / 从工具到助手</span>
+              <span class="signal-copy">从单次问答升级为连续协作</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">下一步：<br />构建个人助手</h2>
+            <p class="lead reveal" style="--delay:170ms">从单次问答，升级到连续完成任务。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">理解上下文</span>
+              <span class="micro-tag">串联步骤</span>
+              <span class="micro-tag">持续输出</span>
+            </div>
+          </div>
+          <div class="assistant-stage assistant-focus assistant-flow-stage reveal" style="--delay:260ms">
+            <div class="side-stack support-stack support-stack--inputs">
+              <article class="side-item">
+                <div class="side-label">输入</div>
+                <h3>资料</h3>
+                <p>上下文、文献与已有结论。</p>
+              </article>
+              <article class="side-item">
+                <div class="side-label">输入</div>
+                <h3>数据</h3>
+                <p>表格、样本和分析对象。</p>
+              </article>
+              <article class="side-item">
+                <div class="side-label">工具</div>
+                <h3>模板 / 脚本</h3>
+                <p>把常用做法固化成可复用能力。</p>
+              </article>
+            </div>
+            <div class="assistant-beam assistant-beam--in" aria-hidden="true"></div>
+            <article class="core-stage focus-core anchor-panel">
+              <div class="core-eyebrow">AI 助手</div>
+              <div class="core-title">理解上下文<br />串联步骤<br />持续输出</div>
+              <div class="core-links">
+                <span>查找与整理</span>
+                <span>分析与作图</span>
+                <span>报告与行动</span>
+              </div>
+              <p class="core-note">价值不在多聊几句，而在连续完成任务。</p>
+            </article>
+            <div class="assistant-beam assistant-beam--out" aria-hidden="true"></div>
+            <div class="output-rail support-stack support-stack--outputs">
+              <article class="side-item">
+                <div class="side-label">输出</div>
+                <h3>分析</h3>
+                <p>更快得到可讨论的第一版判断。</p>
+              </article>
+              <article class="side-item">
+                <div class="side-label">输出</div>
+                <h3>图表</h3>
+                <p>把结果转成清晰的可视化表达。</p>
+              </article>
+              <article class="side-item">
+                <div class="side-label">输出</div>
+                <h3>报告 / 待办</h3>
+                <p>直接衔接沟通与执行。</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.5 科研与专业决策" data-title="不止大语言模型" data-theme="research">
+      <div class="slide-content">
+        <div class="inner methods-stage">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.5 / 科研方向</span>
+              <span class="signal-copy">按问题选方法，而不是按热度选方法</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">别只盯着大语言模型</h2>
+            <p class="lead reveal" style="--delay:170ms">按问题选 AI，而不是按热度选 AI。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">知识整理</span>
+              <span class="micro-tag">生成重建</span>
+              <span class="micro-tag">优化搜索</span>
+            </div>
+          </div>
+          <div class="research-focus anchor-panel reveal" style="--delay:240ms">
+            <div class="capability-rail reveal" style="--delay:260ms">
+              <span class="rail-chip">LLM</span>
+              <span class="rail-chip">Diffusion</span>
+              <span class="rail-chip">RL</span>
+              <span class="rail-chip">PINN</span>
+            </div>
+            <div class="research-board">
+              <div class="method-list">
+                <div class="method-row">
+                  <div class="method-tag">LLM</div>
+                  <div class="method-main">知识整理与流程串联</div>
+                  <div class="method-value">更快上手</div>
+                </div>
+                <div class="method-row">
+                  <div class="method-tag">Diffusion</div>
+                  <div class="method-main">生成与重建</div>
+                  <div class="method-value">更丰富表达</div>
+                </div>
+                <div class="method-row">
+                  <div class="method-tag">RL</div>
+                  <div class="method-main">优化与策略搜索</div>
+                  <div class="method-value">更聪明决策</div>
+                </div>
+                <div class="method-row">
+                  <div class="method-tag">PINN</div>
+                  <div class="method-main">物理约束建模</div>
+                  <div class="method-value">更稳健求解</div>
+                </div>
+              </div>
+              <article class="statement-card decision-card">
+                <div class="statement-kicker">方法匹配</div>
+                <strong>目标不是追一种模型，而是得到更快、更准、更聪明的决策。</strong>
+                <p>先定义问题，再选择最合适的方法组合。</p>
+                <div class="section-actions">
+                  <span class="micro-tag">任务导向</span>
+                  <span class="micro-tag">组合使用</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="4.6 团队路线图" data-title="团队基建" data-theme="roadmap" data-motion="roadmap">
+      <div class="slide-content">
+        <div class="inner roadmap-stage">
+          <div class="section-copy section-hero">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">4.6 / 团队层面</span>
+              <span class="signal-copy">从个人提效到组织复利</span>
+            </div>
+            <h2 class="reveal" style="--delay:100ms">团队提速，<br />靠基建</h2>
+            <p class="lead reveal" style="--delay:170ms">先试点，再沉淀，再放大。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+            <div class="section-actions reveal" style="--delay:290ms">
+              <span class="micro-tag">个人试点</span>
+              <span class="micro-tag">流程沉淀</span>
+              <span class="micro-tag">团队放大</span>
+            </div>
+          </div>
+          <div class="roadmap-shell roadmap-shell--staircase focus-shell focus-shell--roadmap anchor-panel reveal" style="--delay:240ms">
+            <div class="step-band step-band--staircase" id="roadmapGrid">
+              <svg class="roadmap-curve" viewBox="0 0 1000 460" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="roadmapCurveGradient" x1="80" y1="360" x2="920" y2="90" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#94afff" stop-opacity="0.18" />
+                    <stop offset="34%" stop-color="#888fff" stop-opacity="0.72" />
+                    <stop offset="68%" stop-color="#9c68ff" stop-opacity="0.96" />
+                    <stop offset="100%" stop-color="#d68aff" stop-opacity="1" />
+                  </linearGradient>
+                </defs>
+                <path class="curve-glow" d="M 102 378 C 194 368, 282 346, 352 308 S 528 234, 640 178 S 818 110, 902 90" />
+                <path class="curve-base" d="M 102 378 C 194 368, 282 346, 352 308 S 528 234, 640 178 S 818 110, 902 90" />
+                <path class="curve-flow" d="M 102 378 C 194 368, 282 346, 352 308 S 528 234, 640 178 S 818 110, 902 90" />
+              </svg>
+              <div class="step-segment step-segment--1">
+                <article class="stage-block stage-1" data-stage="0">
+                  <div class="stage-kicker">阶段 1</div>
+                  <h3>个人试点</h3>
+                  <p>先在高频小问题上看见真实收益。</p>
+                </article>
+              </div>
+              <div class="step-segment step-segment--2">
+                <article class="stage-block stage-2" data-stage="1">
+                  <div class="stage-kicker">阶段 2</div>
+                  <h3>流程沉淀</h3>
+                  <p>把有效做法变成模板、脚本和知识。</p>
+                </article>
+              </div>
+              <div class="step-segment step-segment--3">
+                <article class="stage-block stage-3" data-stage="2">
+                  <div class="stage-kicker">阶段 3</div>
+                  <h3>团队放大</h3>
+                  <p>把个人收益升级成组织能力。</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-section="第四部分总结" data-title="结尾总结" data-theme="intro">
+      <div id="laser-flow-bg" aria-hidden="true"></div>
+      <div class="slide-content">
+        <div class="inner closing-stage closing-stage--single">
+          <div class="section-copy section-hero closing-intro">
+            <div class="signal-strip reveal" style="--delay:40ms">
+              <span class="signal-pill">第四部分 · 结尾</span>
+              <span class="signal-copy">把收益变成组织能力</span>
+            </div>
+            <h1 class="reveal" style="--delay:100ms">把 AI 用进工作现场</h1>
+            <p class="lead reveal" style="--delay:170ms">效率会提升，创新会加速，决策会更聪明。</p>
+            <div class="page-rule draw-in" style="--delay:240ms"></div>
+          </div>
+          <div class="closing-statement anchor-panel reveal-group">
+            <div class="closing-copy">
+              <div class="section-label">落地动作</div>
+              <div class="closing-manifesto reveal-group" style="--delay:280ms">
+                <div class="closing-laser-flow" aria-hidden="true"></div>
+                <div class="manifesto-line">
+                  <div class="manifesto-no">01</div>
+                  <div>
+                    <strong>从一个高频小流程开始</strong>
+                    <p>先让收益变得可见。</p>
+                  </div>
+                </div>
+                <div class="manifesto-line">
+                  <div class="manifesto-no">02</div>
+                  <div>
+                    <strong>把有效做法沉淀下来</strong>
+                    <p>形成模板、脚本与知识。</p>
+                  </div>
+                </div>
+                <div class="manifesto-line">
+                  <div class="manifesto-no">03</div>
+                  <div>
+                    <strong>让个人收益变成团队能力</strong>
+                    <p>从个人提效走向组织复利。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
+  <script src="../shared/part-jump-menu.js?v=20260312c"></script>
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const navDots = document.getElementById('navDots');
+    const sectionBadge = document.getElementById('sectionBadge');
+    const scopeBadge = document.getElementById('scopeBadge');
+    const slideCounter = document.getElementById('slideCounter');
+    const body = document.body;
+    const vantaNetBg = document.getElementById('vantaNetBg');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const playedMotion = new WeakSet();
+    let currentSlide = 0;
+    let wheelLocked = false;
+    let pendingTimers = [];
+    let currentMotionSlide = null;
+    let vantaNetEffect = null;
+
+    function initVantaBackground() {
+      if (prefersReducedMotion || !vantaNetBg || !window.THREE || !window.VANTA || !window.VANTA.NET) return;
+      if (vantaNetEffect) return;
+      try {
+        vantaNetEffect = window.VANTA.NET({
+          el: vantaNetBg,
+          mouseControls: false,
+          touchControls: false,
+          gyroControls: false,
+          minHeight: 200,
+          minWidth: 200,
+          scale: 1,
+          scaleMobile: 1,
+          backgroundAlpha: 1,
+          backgroundColor: 0x2c2587,
+          color: 0x29e697,
+          maxDistance: 20,
+          points: 10,
+          spacing: 15,
+          showDots: false,
+        });
+        body.classList.add('vanta-active');
+      } catch (error) {
+        console.warn('Vanta NET init failed', error);
+      }
+    }
+
+    function destroyVantaBackground() {
+      if (!vantaNetEffect) return;
+      if (typeof vantaNetEffect.destroy === 'function') vantaNetEffect.destroy();
+      vantaNetEffect = null;
+      body.classList.remove('vanta-active');
+    }
+
+    function buildNavDots() {
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.className = 'nav-dot';
+        dot.type = 'button';
+        dot.title = `${index + 1}. ${slide.dataset.title}`;
+        dot.addEventListener('click', () => goToSlide(index));
+        navDots.appendChild(dot);
+      });
+    }
+
+    function buildPartUrl(baseUrl, slideTarget) {
+      const url = new URL(baseUrl, window.location.href);
+      if (slideTarget !== undefined && slideTarget !== null) {
+        url.searchParams.set('slide', String(slideTarget));
+      }
+      return url.href;
+    }
+
+    const PREV_PART_URL = buildPartUrl('../part3/pinn_slides.html', 'last');
+
+    function getQuerySlideIndex() {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('slide');
+      if (!raw || raw === 'first') return 0;
+      if (raw === 'last') return slides.length - 1;
+
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return 0;
+      return Math.min(Math.max(parsed - 1, 0), slides.length - 1);
+    }
+
+    function syncQuery() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('slide', String(currentSlide + 1));
+      history.replaceState(null, '', url);
+    }
+
+    function clearMotionTimers() {
+      pendingTimers.forEach(clearTimeout);
+      pendingTimers = [];
+    }
+
+    function setAccelState(slide, activeCount, progress) {
+      slide.style.setProperty('--accel-progress', progress);
+      slide.querySelectorAll('.accel-step').forEach((step, index) => {
+        step.classList.toggle('is-on', index < activeCount);
+      });
+    }
+
+    function setWorkflowState(slide, activeCount, progress) {
+      slide.style.setProperty('--flow-progress', progress);
+      slide.querySelectorAll('.workflow-node').forEach((node, index) => {
+        node.classList.toggle('is-on', index < activeCount);
+      });
+    }
+
+    function setRoadmapState(slide, activeCount, progress) {
+      slide.style.setProperty('--roadmap-progress', progress);
+      slide.querySelectorAll('.stage-block').forEach((block, index) => {
+        block.classList.toggle('is-on', index < activeCount);
+      });
+    }
+
+    function finalizeMotion(slide) {
+      if (!slide) return;
+      if (slide.dataset.motion === 'accel') setAccelState(slide, 4, 100);
+      if (slide.dataset.motion === 'workflow') setWorkflowState(slide, 5, 100);
+      if (slide.dataset.motion === 'roadmap') setRoadmapState(slide, 3, 100);
+      playedMotion.add(slide);
+    }
+
+    function queueTimer(fn, delay) {
+      pendingTimers.push(setTimeout(fn, delay));
+    }
+
+    function playSlideMotion(slide) {
+      if (!slide || !slide.dataset.motion) return;
+      if (playedMotion.has(slide) || prefersReducedMotion) {
+        finalizeMotion(slide);
+        return;
+      }
+
+      if (slide.dataset.motion === 'accel') {
+        setAccelState(slide, 0, 0);
+        [[1, 28], [2, 54], [3, 78], [4, 100]].forEach(([count, progress], idx) => {
+          queueTimer(() => setAccelState(slide, count, progress), 240 + idx * 190);
+        });
+        queueTimer(() => finalizeMotion(slide), 980);
+      }
+
+      if (slide.dataset.motion === 'workflow') {
+        setWorkflowState(slide, 0, 0);
+        [[1, 18], [2, 38], [3, 58], [4, 80], [5, 100]].forEach(([count, progress], idx) => {
+          queueTimer(() => setWorkflowState(slide, count, progress), 200 + idx * 170);
+        });
+        queueTimer(() => finalizeMotion(slide), 1060);
+      }
+
+      if (slide.dataset.motion === 'roadmap') {
+        setRoadmapState(slide, 0, 0);
+        queueTimer(() => setRoadmapState(slide, 0, 30), 180);
+        queueTimer(() => setRoadmapState(slide, 1, 52), 340);
+        queueTimer(() => setRoadmapState(slide, 2, 76), 560);
+        queueTimer(() => setRoadmapState(slide, 3, 100), 780);
+        queueTimer(() => finalizeMotion(slide), 980);
+      }
+    }
+
+    function updateDeckState() {
+      clearMotionTimers();
+      if (currentMotionSlide && currentMotionSlide !== slides[currentSlide]) {
+        finalizeMotion(currentMotionSlide);
+      }
+
+      slides.forEach((slide, index) => {
+        slide.classList.remove('is-active', 'is-before', 'is-after');
+        if (index < currentSlide) slide.classList.add('is-before');
+        if (index > currentSlide) slide.classList.add('is-after');
+        if (index === currentSlide) slide.classList.add('is-active');
+        slide.setAttribute('aria-hidden', String(index !== currentSlide));
+        slide.tabIndex = index === currentSlide ? 0 : -1;
+      });
+
+      const active = slides[currentSlide];
+      currentMotionSlide = active.dataset.motion ? active : null;
+      body.dataset.theme = active.dataset.theme || 'intro';
+      sectionBadge.textContent = active.dataset.section || '第四部分';
+      scopeBadge.textContent = active.dataset.title || '把 AI 纳入工作流';
+      slideCounter.textContent = `${String(currentSlide + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+      [...navDots.children].forEach((dot, index) => dot.classList.toggle('active', index === currentSlide));
+      syncQuery();
+      playSlideMotion(active);
+    }
+
+    function goToSlide(index) {
+      currentSlide = Math.max(0, Math.min(index, slides.length - 1));
+      updateDeckState();
+    }
+
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() {
+      if (currentSlide <= 0) {
+        window.location.href = PREV_PART_URL;
+        return;
+      }
+      goToSlide(currentSlide - 1);
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        nextSlide();
+      }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        prevSlide();
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        goToSlide(0);
+      }
+      if (event.key === 'End') {
+        event.preventDefault();
+        goToSlide(slides.length - 1);
+      }
+      if (event.key.toLowerCase() === 'f') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+    });
+
+    window.addEventListener('wheel', (event) => {
+      if (wheelLocked || Math.abs(event.deltaY) < 40) return;
+      event.preventDefault();
+      wheelLocked = true;
+      event.deltaY > 0 ? nextSlide() : prevSlide();
+      setTimeout(() => { wheelLocked = false; }, prefersReducedMotion ? 80 : 620);
+    }, { passive: false });
+
+    let touchStartX = null;
+    let touchStartY = null;
+
+    window.addEventListener('touchstart', (event) => {
+      touchStartX = event.touches[0].clientX;
+      touchStartY = event.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', (event) => {
+      if (touchStartX === null || touchStartY === null) return;
+      const deltaX = touchStartX - event.changedTouches[0].clientX;
+      const deltaY = touchStartY - event.changedTouches[0].clientY;
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 45) {
+        deltaX > 0 ? nextSlide() : prevSlide();
+      }
+      touchStartX = null;
+      touchStartY = null;
+    }, { passive: true });
+
+    initVantaBackground();
+    window.addEventListener('resize', () => {
+      if (vantaNetEffect && typeof vantaNetEffect.resize === 'function') vantaNetEffect.resize();
+    });
+    window.addEventListener('beforeunload', destroyVantaBackground);
+
+    buildNavDots();
+    currentSlide = getQuerySlideIndex();
+    updateDeckState();
+
+    // ── LaserFlow Three.js – closing slide ─────────────────────────
+    (function() {
+      'use strict';
+
+      const mount = document.getElementById('laser-flow-bg');
+      if (!mount || typeof THREE === 'undefined') return;
+
+      const VERT = `precision highp float;
+attribute vec3 position;
+void main(){ gl_Position = vec4(position, 1.0); }`;
+
+      const FRAG = `#ifdef GL_ES
+#extension GL_OES_standard_derivatives : enable
+#endif
+precision highp float;
+precision mediump int;
+
+uniform float iTime;
+uniform vec3 iResolution;
+uniform vec4 iMouse;
+uniform float uWispDensity;
+uniform float uTiltScale;
+uniform float uFlowTime;
+uniform float uFogTime;
+uniform float uBeamXFrac;
+uniform float uBeamYFrac;
+uniform float uFlowSpeed;
+uniform float uVLenFactor;
+uniform float uHLenFactor;
+uniform float uFogIntensity;
+uniform float uFogScale;
+uniform float uWSpeed;
+uniform float uWIntensity;
+uniform float uFlowStrength;
+uniform float uDecay;
+uniform float uFalloffStart;
+uniform float uFogFallSpeed;
+uniform vec3 uColor;
+uniform float uFade;
+
+#define PI 3.14159265359
+#define TWO_PI 6.28318530718
+#define EPS 1e-6
+#define DT_LOCAL 0.0038
+#define EDGE_SOFT (DT_LOCAL*4.0)
+#define TAP_RADIUS 6
+#define R_H 150.0
+#define R_V 150.0
+#define FLARE_HEIGHT 16.0
+#define FLARE_AMOUNT 8.0
+#define FLARE_EXP 2.0
+#define TOP_FADE_START 0.1
+#define TOP_FADE_EXP 1.0
+#define FLOW_PERIOD 0.5
+#define FLOW_SHARPNESS 1.5
+
+#define W_BASE_X 1.5
+#define W_LAYER_GAP 0.25
+#define W_LANES 10
+#define W_SIDE_DECAY 0.5
+#define W_HALF 0.01
+#define W_AA 0.15
+#define W_CELL 20.0
+#define W_SEG_MIN 0.01
+#define W_SEG_MAX 0.55
+#define W_CURVE_AMOUNT 15.0
+#define W_CURVE_RANGE (FLARE_HEIGHT - 3.0)
+#define W_BOTTOM_EXP 10.0
+
+#define FOG_ON 1
+#define FOG_CONTRAST 1.2
+#define FOG_SPEED_U 0.1
+#define FOG_SPEED_V -0.1
+#define FOG_OCTAVES 5
+#define FOG_BOTTOM_BIAS 0.8
+#define FOG_TILT_TO_MOUSE 0.05
+#define FOG_TILT_DEADZONE 0.01
+#define FOG_TILT_MAX_X 0.35
+#define FOG_TILT_SHAPE 1.5
+#define FOG_BEAM_MIN 0.0
+#define FOG_BEAM_MAX 0.75
+#define FOG_MASK_GAMMA 0.5
+#define FOG_EXPAND_SHAPE 12.2
+#define FOG_EDGE_MIX 0.5
+
+#define HFOG_EDGE_START 0.20
+#define HFOG_EDGE_END 0.98
+#define HFOG_EDGE_GAMMA 1.4
+#define HFOG_Y_RADIUS 25.0
+#define HFOG_Y_SOFT 60.0
+
+#define EDGE_X0 0.22
+#define EDGE_X1 0.995
+#define EDGE_X_GAMMA 1.25
+#define EDGE_LUMA_T0 0.0
+#define EDGE_LUMA_T1 2.0
+#define DITHER_STRENGTH 1.0
+
+float g(float x){return x<=0.00031308?12.92*x:1.055*pow(x,1.0/2.4)-0.055;}
+float bs(vec2 p,vec2 q,float powr){
+    float d=distance(p,q),f=powr*uFalloffStart,r=(f*f)/(d*d+EPS);
+    return powr*min(1.0,r);
+}
+float bsa(vec2 p,vec2 q,float powr,vec2 s){
+    vec2 d=p-q; float dd=(d.x*d.x)/(s.x*s.x)+(d.y*d.y)/(s.y*s.y),f=powr*uFalloffStart,r=(f*f)/(dd+EPS);
+    return powr*min(1.0,r);
+}
+float tri01(float x){float f=fract(x);return 1.0-abs(f*2.0-1.0);}
+float tauWf(float t,float tmin,float tmax){float a=smoothstep(tmin,tmin+EDGE_SOFT,t),b=1.0-smoothstep(tmax-EDGE_SOFT,tmax,t);return max(0.0,a*b);}
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+34.123);return fract(p.x*p.y);}
+float vnoise(vec2 p){
+    vec2 i=floor(p),f=fract(p);
+    float a=h21(i),b=h21(i+vec2(1,0)),c=h21(i+vec2(0,1)),d=h21(i+vec2(1,1));
+    vec2 u=f*f*(3.0-2.0*f);
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+}
+float fbm2(vec2 p){
+    float v=0.0,amp=0.6; mat2 m=mat2(0.86,0.5,-0.5,0.86);
+    for(int i=0;i<FOG_OCTAVES;++i){v+=amp*vnoise(p); p=m*p*2.03+17.1; amp*=0.52;}
+    return v;
+}
+float rGate(float x,float l){float a=smoothstep(0.0,W_AA,x),b=1.0-smoothstep(l,l+W_AA,x);return max(0.0,a*b);}
+float flareY(float y){float t=clamp(1.0-(clamp(y,0.0,FLARE_HEIGHT)/max(FLARE_HEIGHT,EPS)),0.0,1.0);return pow(t,FLARE_EXP);}
+
+float vWisps(vec2 uv,float topF){
+    float y=uv.y,yf=(y+uFlowTime*uWSpeed)/W_CELL;
+    float dRaw=clamp(uWispDensity,0.0,2.0),d=dRaw<=0.0?1.0:dRaw;
+    float lanesF=floor(float(W_LANES)*min(d,1.0)+0.5);
+    int lanes=int(max(1.0,lanesF));
+    float sp=min(d,1.0),ep=max(d-1.0,0.0);
+    float fm=flareY(max(y,0.0)),rm=clamp(1.0-(y/max(W_CURVE_RANGE,EPS)),0.0,1.0),cm=fm*rm;
+    const float G=0.05; float xS=1.0+(FLARE_AMOUNT*W_CURVE_AMOUNT*G)*cm;
+    float sPix=clamp(y/R_V,0.0,1.0),bGain=pow(1.0-sPix,W_BOTTOM_EXP),sum=0.0;
+    for(int s=0;s<2;++s){
+        float sgn=s==0?-1.0:1.0;
+        for(int i=0;i<W_LANES;++i){
+            if(i>=lanes) break;
+            float off=W_BASE_X+float(i)*W_LAYER_GAP,xc=sgn*(off*xS);
+            float dx=abs(uv.x-xc),lat=1.0-smoothstep(W_HALF,W_HALF+W_AA,dx),amp=exp(-off*W_SIDE_DECAY);
+            float seed=h21(vec2(off,sgn*17.0)),yf2=yf+seed*7.0,ci=floor(yf2),fy=fract(yf2);
+            float seg=mix(W_SEG_MIN,W_SEG_MAX,h21(vec2(ci,off*2.3)));
+            float spR=h21(vec2(ci,off+sgn*31.0)),seg1=rGate(fy,seg)*step(spR,sp);
+            if(ep>0.0){float spR2=h21(vec2(ci*3.1+7.0,off*5.3+sgn*13.0)); float f2=fract(fy+0.5); seg1+=rGate(f2,seg*0.9)*step(spR2,ep);}
+            sum+=amp*lat*seg1;
+        }
+    }
+    float span=smoothstep(-3.0,0.0,y)*(1.0-smoothstep(R_V-6.0,R_V,y));
+    return uWIntensity*sum*topF*bGain*span;
+}
+
+void mainImage(out vec4 fc,in vec2 frag){
+    vec2 C=iResolution.xy*.5; float invW=1.0/max(C.x,1.0);
+    vec2 sc=(512.0/iResolution.xy)*.4;
+    vec2 uv=(frag-C)*sc,off=vec2(uBeamXFrac*iResolution.x*sc.x,uBeamYFrac*iResolution.y*sc.y);
+    vec2 uvc = uv - off;
+    float a=0.0,b=0.0;
+    float basePhase=1.5*PI+uDecay*.5; float tauMin=basePhase-uDecay; float tauMax=basePhase;
+    float cx=clamp(uvc.x/(R_H*uHLenFactor),-1.0,1.0),tH=clamp(TWO_PI-acos(cx),tauMin,tauMax);
+    for(int k=-TAP_RADIUS;k<=TAP_RADIUS;++k){
+        float tu=tH+float(k)*DT_LOCAL,wt=tauWf(tu,tauMin,tauMax); if(wt<=0.0) continue;
+        float spd=max(abs(sin(tu)),0.02),u=clamp((basePhase-tu)/max(uDecay,EPS),0.0,1.0),env=pow(1.0-abs(u*2.0-1.0),0.8);
+        vec2 p=vec2((R_H*uHLenFactor)*cos(tu),0.0);
+        a+=wt*bs(uvc,p,env*spd);
+    }
+    float yPix=uvc.y,cy=clamp(-yPix/(R_V*uVLenFactor),-1.0,1.0),tV=clamp(TWO_PI-acos(cy),tauMin,tauMax);
+    for(int k=-TAP_RADIUS;k<=TAP_RADIUS;++k){
+        float tu=tV+float(k)*DT_LOCAL,wt=tauWf(tu,tauMin,tauMax); if(wt<=0.0) continue;
+        float yb=(-R_V)*cos(tu),s=clamp(yb/R_V,0.0,1.0),spd=max(abs(sin(tu)),0.02);
+        float env=pow(1.0-s,0.6)*spd;
+        float cap=1.0-smoothstep(TOP_FADE_START,1.0,s); cap=pow(cap,TOP_FADE_EXP); env*=cap;
+        float ph=s/max(FLOW_PERIOD,EPS)+uFlowTime*uFlowSpeed;
+        float fl=pow(tri01(ph),FLOW_SHARPNESS);
+        env*=mix(1.0-uFlowStrength,1.0,fl);
+        float yp=(-R_V*uVLenFactor)*cos(tu),m=pow(smoothstep(FLARE_HEIGHT,0.0,yp),FLARE_EXP),wx=1.0+FLARE_AMOUNT*m;
+        vec2 sig=vec2(wx,1.0),p=vec2(0.0,yp);
+        float mask=step(0.0,yp);
+        b+=wt*bsa(uvc,p,mask*env,sig);
+    }
+    float sPix=clamp(yPix/R_V,0.0,1.0),topA=pow(1.0-smoothstep(TOP_FADE_START,1.0,sPix),TOP_FADE_EXP);
+    float L=a+b*topA;
+    float w=vWisps(vec2(uvc.x,yPix),topA);
+    float fog=0.0;
+#if FOG_ON
+    vec2 fuv=uvc*uFogScale;
+    float mAct=step(1.0,length(iMouse.xy)),nx=((iMouse.x-C.x)*invW)*mAct;
+    float ax = abs(nx);
+    float stMag = mix(ax, pow(ax, FOG_TILT_SHAPE), 0.35);
+    float st = sign(nx) * stMag * uTiltScale;
+    st = clamp(st, -FOG_TILT_MAX_X, FOG_TILT_MAX_X);
+    vec2 dir=normalize(vec2(st,1.0));
+    fuv+=uFogTime*uFogFallSpeed*dir;
+    vec2 prp=vec2(-dir.y,dir.x);
+    fuv+=prp*(0.08*sin(dot(uvc,prp)*0.08+uFogTime*0.9));
+    float n=fbm2(fuv+vec2(fbm2(fuv+vec2(7.3,2.1)),fbm2(fuv+vec2(-3.7,5.9)))*0.6);
+    n=pow(clamp(n,0.0,1.0),FOG_CONTRAST);
+    float pixW = 1.0 / max(iResolution.y, 1.0);
+#ifdef GL_OES_standard_derivatives
+    float wL = max(fwidth(L), pixW);
+#else
+    float wL = pixW;
+#endif
+    float m0=pow(smoothstep(FOG_BEAM_MIN - wL, FOG_BEAM_MAX + wL, L),FOG_MASK_GAMMA);
+    float bm=1.0-pow(1.0-m0,FOG_EXPAND_SHAPE); bm=mix(bm*m0,bm,FOG_EDGE_MIX);
+    float yP=1.0-smoothstep(HFOG_Y_RADIUS,HFOG_Y_RADIUS+HFOG_Y_SOFT,abs(yPix));
+    float nxF=abs((frag.x-C.x)*invW),hE=1.0-smoothstep(HFOG_EDGE_START,HFOG_EDGE_END,nxF); hE=pow(clamp(hE,0.0,1.0),HFOG_EDGE_GAMMA);
+    float hW=mix(1.0,hE,clamp(yP,0.0,1.0));
+    float bBias=mix(1.0,1.0-sPix,FOG_BOTTOM_BIAS);
+    float browserFogIntensity = uFogIntensity * 1.8;
+    float radialFade = 1.0 - smoothstep(0.0, 0.7, length(uvc) / 120.0);
+    float safariFog = n * browserFogIntensity * bBias * bm * hW * radialFade;
+    fog = safariFog;
+#endif
+    float LF=L+fog;
+    float dith=(h21(frag)-0.5)*(DITHER_STRENGTH/255.0);
+    float tone=g(LF+w);
+    vec3 col=tone*uColor+dith;
+    float alpha=clamp(g(L+w*0.6)+dith*0.6,0.0,1.0);
+    float nxE=abs((frag.x-C.x)*invW),xF=pow(clamp(1.0-smoothstep(EDGE_X0,EDGE_X1,nxE),0.0,1.0),EDGE_X_GAMMA);
+    float scene=LF+max(0.0,w)*0.5,hi=smoothstep(EDGE_LUMA_T0,EDGE_LUMA_T1,scene);
+    float eM=mix(xF,1.0,hi);
+    col*=eM; alpha*=eM;
+    col*=uFade; alpha*=uFade;
+    fc=vec4(col,alpha);
+}
+
+void main(){
+    vec4 fc;
+    mainImage(fc, gl_FragCoord.xy);
+    gl_FragColor = fc;
+}`;
+
+      function hexToRGB(hex) {
+        let c = hex.trim().replace('#', '');
+        if (c.length === 3) c = c.split('').map(x => x + x).join('');
+        const n = parseInt(c, 16) || 0xffffff;
+        return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+      }
+
+      const laserColor = '#5d66e5';
+      const { r, g, b } = hexToRGB(laserColor);
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: false, alpha: false, depth: false, stencil: false,
+        powerPreference: 'high-performance', premultipliedAlpha: false,
+        preserveDrawingBuffer: false, failIfMajorPerformanceCaveat: false,
+        logarithmicDepthBuffer: false
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = false;
+      if (renderer.outputEncoding !== undefined) renderer.outputEncoding = 3001; // THREE.sRGBEncoding r134
+      renderer.setClearColor(0x000000, 1);
+
+      const laserCanvas = renderer.domElement;
+      mount.appendChild(laserCanvas);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(
+        new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3
+      ));
+
+      const uniforms = {
+        iTime:         { value: 0 },
+        iResolution:   { value: new THREE.Vector3(1, 1, 1) },
+        iMouse:        { value: new THREE.Vector4(0, 0, 0, 0) },
+        uWispDensity:  { value: 1.2 },
+        uTiltScale:    { value: 0.01 },
+        uFlowTime:     { value: 0 },
+        uFogTime:      { value: 0 },
+        uBeamXFrac:    { value: 0.0 },
+        uBeamYFrac:    { value: 0.0 },
+        uFlowSpeed:    { value: 0.35 },
+        uVLenFactor:   { value: 2.4 },
+        uHLenFactor:   { value: 0.55 },
+        uFogIntensity: { value: 0.55 },
+        uFogScale:     { value: 0.28 },
+        uWSpeed:       { value: 16.0 },
+        uWIntensity:   { value: 6.0 },
+        uFlowStrength: { value: 0.28 },
+        uDecay:        { value: 1.1 },
+        uFalloffStart: { value: 1.2 },
+        uFogFallSpeed: { value: 0.6 },
+        uColor:        { value: new THREE.Vector3(r, g, b) },
+        uFade:         { value: 0 },
+      };
+
+      const material = new THREE.RawShaderMaterial({
+        vertexShader: VERT, fragmentShader: FRAG, uniforms,
+        transparent: false, depthTest: false, depthWrite: false,
+        blending: THREE.NormalBlending
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.frustumCulled = false;
+      scene.add(mesh);
+
+      const clock = new THREE.Clock();
+      let prevTime = 0, fade = 0, hasFaded = false;
+      let laserActive = false, rafId = null;
+      let lastW = 0, lastH = 0;
+      const mouseTarget = new THREE.Vector2(0, 0);
+      const mouseSmooth = new THREE.Vector2(0, 0);
+
+      function setSizeNow() {
+        const w = mount.clientWidth || 1;
+        const h = mount.clientHeight || 1;
+        if (Math.abs(w - lastW) < 1 && Math.abs(h - lastH) < 1) return;
+        lastW = w; lastH = h;
+        const dpr = renderer.getPixelRatio();
+        renderer.setSize(w, h, false);
+        uniforms.iResolution.value.set(w * dpr, h * dpr, dpr);
+      }
+
+      function laserAnimate() {
+        if (!laserActive) { rafId = null; return; }
+        rafId = requestAnimationFrame(laserAnimate);
+        const t = clock.getElapsedTime();
+        const dt = Math.max(0, t - prevTime);
+        prevTime = t;
+        const cdt = Math.min(0.033, Math.max(0.001, dt));
+        uniforms.iTime.value = t;
+        uniforms.uFlowTime.value += cdt;
+        uniforms.uFogTime.value += cdt;
+        if (!hasFaded) {
+          fade = Math.min(1, fade + cdt / 1.1);
+          uniforms.uFade.value = fade;
+          if (fade >= 1) hasFaded = true;
+        }
+        mouseSmooth.lerp(mouseTarget, Math.min(1, cdt * 12));
+        uniforms.iMouse.value.set(mouseSmooth.x, mouseSmooth.y, 0, 0);
+        setSizeNow();
+        renderer.render(scene, camera);
+      }
+
+      function startLaser() {
+        if (laserActive) return;
+        laserActive = true;
+        fade = 0; hasFaded = false;
+        uniforms.uFade.value = 0;
+        clock.start();
+        setSizeNow();
+        laserAnimate();
+      }
+
+      function stopLaser() {
+        laserActive = false;
+      }
+
+      // Mouse tracking
+      laserCanvas.addEventListener('pointermove', ev => {
+        const rect = laserCanvas.getBoundingClientRect();
+        const dpr = renderer.getPixelRatio();
+        mouseTarget.set(
+          (ev.clientX - rect.left) * dpr,
+          (rect.height - (ev.clientY - rect.top)) * dpr
+        );
+      }, { passive: true });
+      laserCanvas.addEventListener('pointerleave', () => mouseTarget.set(0, 0), { passive: true });
+
+      // Watch closing slide visibility via class mutation
+      const closingSlide = document.querySelector('.slide[data-title="结尾总结"]');
+      if (closingSlide) {
+        const mo = new MutationObserver(() => {
+          if (closingSlide.classList.contains('is-active')) startLaser();
+          else stopLaser();
+        });
+        mo.observe(closingSlide, { attributes: true, attributeFilter: ['class'] });
+        // Check immediately in case we started on the closing slide
+        if (closingSlide.classList.contains('is-active')) startLaser();
+      }
+
+      window.addEventListener('beforeunload', () => {
+        stopLaser();
+        geometry.dispose();
+        material.dispose();
+        renderer.dispose();
+      }, { passive: true });
+    })();
+  </script>
+</body>
+</html>

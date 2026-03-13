@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-arp=""><head><style>body {transition: opacity ease-in 0.2s; } 
+body[unresolved] {opacity: 0; display: block; overflow: hidden; position: relative; } 
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Part 2｜储层地球物理建模中的 AI 前沿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/part-jump-menu.css?v=20260312b">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --bg:        #0C1520;
+  --surface:   #152033;
+  --surface-2: #1E2E42;
+  --text:      #EDE9E2;
+  --text-2:    #8FA3BA;
+  --text-3:    #4A6580;
+  --a1:        #D4A84B;
+  --a2:        #3CC4BC;
+  --a3:        #E06E5A;
+  --a4:        #7B9FD4;
+  --line:      rgba(255,255,255,0.08);
+
+  --title-size: clamp(2rem,   6vw,  4.8rem);
+  --h2-size:    clamp(1.6rem, 4vw,  3rem);
+  --h3-size:    clamp(1.1rem, 2vw,  1.6rem);
+  --body-size:  clamp(0.95rem, 1.6vw, 1.2rem);
+  --small-size: clamp(0.72rem, 1vw,  0.9rem);
+
+  --pad:        clamp(2rem, 5vw, 5rem);
+  --gap:        clamp(1rem, 2vw, 1.8rem);
+  --radius:     clamp(0.75rem, 1.2vw, 1.2rem);
+
+  --font-display: "Sora", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+  --font-body:    "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+}
+
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   DOT GRID TEXTURE
+   ============================================================ */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   SLIDE SYSTEM
+   ============================================================ */
+#deck {
+  position: relative;
+  width: 100vw; height: 100dvh;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: all;
+  z-index: 2;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1, .display { font-family: var(--font-display); font-size: var(--title-size); line-height: 1.05; font-weight: 700; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: var(--h2-size); line-height: 1.1; font-weight: 700; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-size: var(--h3-size); line-height: 1.2; font-weight: 600; }
+p, li { font-size: var(--body-size); line-height: 1.55; }
+ul { padding-left: 1.2em; display: grid; gap: 0.4em; }
+
+.kicker {
+  font-family: "Courier New", monospace;
+  font-size: var(--small-size);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--a1);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.muted { color: var(--text-2); }
+
+/* ============================================================
+   GLASS CARD
+   ============================================================ */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(1rem, 2.5vw, 1.8rem);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================================
+   LAYOUT HELPERS
+   ============================================================ */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); flex: 1; align-items: stretch; }
+.g3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--gap); }
+.g2x2 { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--gap); flex: 1; }
+
+#s3 {
+  padding: clamp(1.25rem, 2.1vw, 2rem) clamp(1.4rem, 2.6vw, 2.4rem);
+  gap: clamp(0.65rem, 1.1vw, 0.95rem) !important;
+}
+
+#s3 h2 {
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+}
+
+#s3 .kicker {
+  margin-bottom: 0.35rem;
+}
+
+#s3 .card {
+  padding: clamp(0.9rem, 1.6vw, 1.2rem);
+}
+
+.s3-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 2rem;
+  overflow: hidden;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.s3-toggle-btn {
+  padding: 0.42rem 1.15rem;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: var(--small-size);
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: background 0.2s, color 0.2s;
+}
+
+.s3-toggle-btn.is-active {
+  background: var(--a1);
+  color: #0C1520;
+  font-weight: 700;
+}
+
+.s3-summary {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.95fr) auto;
+  gap: var(--gap);
+  align-items: center;
+  padding-block: 0.8rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
+    rgba(255,255,255,0.03);
+}
+
+.s3-summary strong {
+  color: var(--a1);
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.s3-summary p {
+  font-size: clamp(0.78rem, 0.95vw, 0.9rem);
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.s3-summary-copy {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.s3-summary-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s3-summary-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.s3-flow-chip {
+  padding: 0.38rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
+  font-size: clamp(0.72rem, 0.9vw, 0.84rem);
+  color: var(--text-2);
+}
+
+.s3-flow-arrow {
+  color: var(--text-3);
+  font-family: "Courier New", monospace;
+  letter-spacing: 0.12em;
+}
+
+.s3-state {
+  flex: 1;
+  min-height: 0;
+}
+
+.s3-state--problem {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  align-items: stretch;
+}
+
+.s3-problem-main,
+.s3-problem-card,
+.s3-solution-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.s3-problem-main {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  align-content: stretch;
+  gap: 0.8rem;
+  min-height: 100%;
+  border-top: 3px solid rgba(214,127,101,0.95);
+  background:
+    linear-gradient(180deg, rgba(214,127,101,0.08), rgba(255,255,255,0.025) 26%),
+    rgba(255,255,255,0.035);
+}
+
+.s3-label {
+  font-family: "Courier New", monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  color: var(--a3);
+}
+
+.s3-card-head {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.s3-card-head h3 {
+  margin: 0;
+}
+
+.s3-problem-lead {
+  font-size: clamp(0.98rem, 1.35vw, 1.22rem);
+  line-height: 1.5;
+}
+
+.s3-metaphor {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border-radius: calc(var(--radius) - 0.2rem);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.s3-metaphor span {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--text-3);
+  font-family: "Courier New", monospace;
+}
+
+.s3-metaphor p {
+  font-size: clamp(0.8rem, 0.98vw, 0.92rem);
+  color: var(--text-2);
+}
+
+.s3-problem-bottom {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.s3-problem-takeaway {
+  display: grid;
+  align-content: start;
+  gap: 0.38rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: calc(var(--radius) - 0.2rem);
+  background: rgba(224,110,90,0.07);
+  border: 1px solid rgba(224,110,90,0.22);
+}
+
+.s3-problem-takeaway span {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--a3);
+  font-family: "Courier New", monospace;
+}
+
+.s3-problem-takeaway p {
+  font-size: clamp(0.8rem, 0.98vw, 0.92rem);
+  color: var(--text-2);
+}
+
+.s3-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.s3-stat {
+  padding: 0.75rem 0.85rem;
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.s3-stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3.8vw, 2.6rem);
+  line-height: 1;
+  color: var(--a1);
+}
+
+.s3-stat span {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: var(--small-size);
+  color: var(--text-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.s3-stat p {
+  margin-top: 0.35rem;
+  font-size: clamp(0.76rem, 0.92vw, 0.88rem);
+}
+
+.s3-seq-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.s3-seq-chip {
+  padding: 0.38rem 0.35rem;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-2);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.s3-problem-side {
+  display: flex;
+}
+
+.s3-problem-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  flex: 1;
+  gap: 0.8rem;
+  border-top: 3px solid rgba(138,164,255,0.9);
+  background:
+    linear-gradient(180deg, rgba(138,164,255,0.09), rgba(255,255,255,0.025) 28%),
+    rgba(255,255,255,0.035);
+}
+
+.s3-problem-list {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.s3-problem-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.72rem 0.85rem;
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: var(--surface-2);
+  min-height: 0;
+}
+
+.s3-problem-icon {
+  color: var(--a3);
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-top: 0.1rem;
+}
+
+.s3-problem-icon--good {
+  color: var(--a2);
+}
+
+.s3-problem-item p {
+  font-size: clamp(0.77rem, 0.93vw, 0.89rem);
+  line-height: 1.5;
+}
+
+.s3-problem-foot {
+  margin-top: auto;
+  display: grid;
+  gap: 0.28rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.s3-problem-foot span {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--a2);
+  font-family: "Courier New", monospace;
+}
+
+.s3-state--solution {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.s3-solution-card {
+  gap: 0.65rem;
+}
+
+.s3-solution-card ul {
+  margin: 0;
+  padding-left: 1.05em;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.s3-solution-card p,
+.s3-solution-card li {
+  font-size: clamp(0.77rem, 0.93vw, 0.89rem);
+  color: var(--text-2);
+}
+
+.s3-solution-tag {
+  margin-top: auto;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.65rem;
+  background: var(--surface-2);
+  font-size: var(--small-size);
+  font-family: "Courier New", monospace;
+  letter-spacing: 0.08em;
+}
+
+.s3-solution-score {
+  margin-top: auto;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface-2);
+  border-radius: 0.65rem;
+}
+
+.s3-solution-score strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem,3.5vw,2.4rem);
+  color: var(--a1);
+}
+
+.s3-solution-score span {
+  font-size: var(--small-size);
+  color: var(--text-2);
+}
+
+/* ============================================================
+   S3 NUMBERED BADGE + ITEM TITLE + CALLOUT (redesigned problem panel)
+   ============================================================ */
+.s3-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: rgba(224,110,90,0.12);
+  border: 1px solid rgba(224,110,90,0.38);
+  color: var(--a3);
+  font-family: "Courier New", monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 0.08rem;
+}
+
+.s3-item-title {
+  display: block;
+  font-size: clamp(0.8rem, 0.98vw, 0.92rem);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.22rem;
+  font-family: var(--font-display);
+}
+
+/* ============================================================
+   S6 DIFFUSION BRIDGE
+   ============================================================ */
+.s6-image-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.s6-image-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.s6-stage-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  flex-shrink: 0;
+}
+
+.s6-stage-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border-radius: calc(var(--radius) - 0.2rem);
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.s6-stage-card span {
+  font-family: "Courier New", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+}
+
+.s6-stage-card h3 {
+  margin: 0;
+}
+
+.s6-stage-card p {
+  font-size: var(--small-size);
+  color: var(--text-2);
+}
+
+/* ============================================================
+   S8 CURVED CONVEYOR FLOW
+   ============================================================ */
+.s8-flow-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.8rem, 1.4vw, 1rem);
+  padding: clamp(1rem, 1.8vw, 1.35rem);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)),
+    rgba(255,255,255,0.03);
+}
+
+.s8-flow-hero {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: calc(var(--radius) - 0.15rem);
+  background:
+    radial-gradient(circle at 18% 72%, rgba(212,168,75,0.14), transparent 26%),
+    radial-gradient(circle at 48% 28%, rgba(60,196,188,0.12), transparent 24%),
+    radial-gradient(circle at 79% 34%, rgba(123,159,212,0.14), transparent 24%),
+    rgba(8, 15, 24, 0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.s8-flow-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.s8-flow-base {
+  fill: none;
+  stroke: rgba(255,255,255,0.08);
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
+.s8-flow-glow {
+  fill: none;
+  stroke: rgba(255,255,255,0.04);
+  stroke-width: 34;
+  stroke-linecap: round;
+}
+
+.s8-flow-accent {
+  fill: none;
+  stroke: rgba(212,168,75,0.88);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 14 20;
+  animation: s8Dash 9s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(212,168,75,0.3));
+}
+
+.s8-node-dot {
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.18));
+}
+
+.s8-flow-note {
+  position: absolute;
+  left: 50%;
+  top: 3.5%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(8,15,24,0.6);
+  font-size: 0.74rem;
+  color: var(--text-2);
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.s8-stage {
+  position: absolute;
+  width: min(18rem, 20.5%);
+  padding: 0.78rem 0.9rem 0.86rem;
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.18);
+  display: grid;
+  gap: 0.26rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.s8-stage span {
+  font-family: "Courier New", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.s8-stage h3 {
+  margin: 0;
+}
+
+.s8-stage p {
+  font-size: var(--small-size);
+  color: var(--text-2);
+}
+
+.s8-stage--1 { left: 2.8%; top: 52%; --delay: 0.06s; }
+.s8-stage--2 { left: 26%; top: 13%; --delay: 0.18s; }
+.s8-stage--3 { left: 51.5%; top: 56%; --delay: 0.30s; }
+.s8-stage--4 { right: 2.8%; top: 16%; --delay: 0.42s; }
+
+.s8-support-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  flex-shrink: 0;
+}
+
+.s8-support-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  padding: clamp(0.8rem, 1.5vw, 1.05rem);
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.s8-support-card span {
+  font-family: "Courier New", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+}
+
+.s8-support-card h3 {
+  margin: 0;
+}
+
+.s8-support-card p {
+  font-size: var(--small-size);
+  color: var(--text-2);
+}
+
+#s8.active .s8-stage,
+#s8.active .s8-support-card {
+  animation: s8Rise 0.6s ease forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes s8Dash {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -272; }
+}
+
+@keyframes s8Rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+#nav {
+  position: fixed;
+  bottom: 1.5rem; right: 2rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  z-index: 100;
+}
+
+#counter {
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  color: var(--text-3);
+}
+
+#nav button {
+  width: 2.2rem; height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-2);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+#nav button:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
+/* Progress bar */
+#pbar-wrap {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 2px; background: rgba(255,255,255,0.06);
+  z-index: 100;
+}
+#pbar { height: 100%; background: var(--a1); width: 10%; transition: width 0.4s ease; }
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.15s !important;
+  }
+  .s8-flow-accent { animation: none !important; }
+  .s8-stage,
+  .s8-support-card { opacity: 1 !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- S1: COVER -->
+  <div class="slide active" id="s1" style="justify-content:center;">
+    <div style="margin:auto;max-width:min(90%,820px);">
+      <span class="kicker" style="margin-bottom:1.5rem;">PART 2 · RESERVOIR GEOPHYSICS · AI / ML</span>
+      <h1 style="margin-bottom:1.4rem;line-height:1.1;">
+        <span style="white-space:nowrap;">AI与机器学习</span><br>
+        在气田开发<span style="color:var(--a1);">地质建模</span>中的应用
+      </h1>
+      <p class="muted" style="font-size:var(--h3-size);max-width:55ch;line-height:1.55;">
+        从测井曲线到三维地质模型<br>AI/ML 全流程实践
+      </p>
+      <div style="margin-top:2.5rem;display:flex;gap:0.5rem;align-items:center;">
+        <div style="height:3px;width:80px;background:var(--a1);border-radius:2px;"></div>
+        <div style="height:3px;width:40px;background:var(--a2);border-radius:2px;"></div>
+        <div style="height:3px;width:40px;background:var(--a3);border-radius:2px;"></div>
+        <div style="height:3px;width:40px;background:var(--a4);border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S2: PIPELINE OVERVIEW -->
+  <div class="slide" id="s2" style="gap:var(--gap);">
+    <!-- Header row -->
+    <div style="flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);">
+      <div>
+        <span class="kicker">全流程概览 · THE PIPELINE</span>
+        <h2>一条由数据驱动的建模链</h2>
+      </div>
+      <p class="muted" style="font-size:var(--body-size);text-align:right;padding-bottom:0.15rem;flex-shrink:0;">多源数据融合 · 每一步为下一步提供语境<br>相互依存，不可跳过</p>
+    </div>
+    <!-- Main: image left + 2×2 pipeline grid right -->
+    <div style="display:flex;gap:var(--gap);flex:1;min-height:0;">
+      <!-- Reference image -->
+      <div style="flex:1.25;display:flex;align-items:center;justify-content:center;min-height:0;">
+        <img src="image/image1.png" alt="Multi-Modal Data Fusion Pipeline"
+          style="width:100%;height:100%;display:block;object-fit:contain;object-position:center;border-radius:var(--radius);">
+      </div>
+      <!-- Pipeline steps 2×2 -->
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:var(--gap);min-height:0;">
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a1);">
+          <span style="font-family:'Courier New',monospace;font-size:0.6rem;color:var(--a1);letter-spacing:0.18em;">01 / INPUT</span>
+          <h3>地震/测井数据</h3>
+          <p class="muted" style="font-size:var(--small-size);">Well Logs</p>
+          <p style="font-size:var(--small-size);margin-top:auto;">GR · RT · DEN · CNL 多条曲线连续记录地层物性变化</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a2);">
+          <span style="font-family:'Courier New',monospace;font-size:0.6rem;color:var(--a2);letter-spacing:0.18em;">02 / CLASSIFY</span>
+          <h3>岩相分类</h3>
+          <p class="muted" style="font-size:var(--small-size);">Facies Classification</p>
+          <p style="font-size:var(--small-size);margin-top:auto;">LSTM / BiLSTM / Transformer 序列建模识别沉积相</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a3);">
+          <span style="font-family:'Courier New',monospace;font-size:0.6rem;color:var(--a3);letter-spacing:0.18em;">03 / MAP</span>
+          <h3>相图生成</h3>
+          <p class="muted" style="font-size:var(--small-size);">Facies Map Generation</p>
+          <p style="font-size:var(--small-size);margin-top:auto;">MPS -> Diffusion</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a4);">
+          <span style="font-family:'Courier New',monospace;font-size:0.6rem;color:var(--a4);letter-spacing:0.18em;">04 / AUTOMATE</span>
+          <h3>建模自动化</h3>
+          <p class="muted" style="font-size:var(--small-size);">Workflow Automation</p>
+          <p style="font-size:var(--small-size);margin-top:auto;">WLFM 基础模型 · AutoML · 集成量化解释</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3★: FACIES CLASSIFICATION TOGGLE (HERO 1) -->
+  <div class="slide" id="s3" style="gap:var(--gap);">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);flex-shrink:0;">
+      <div>
+        <span class="kicker">测井相识别 · 1D LOG FACIES · HERO 1</span>
+        <h2>从逐点预测到序列建模</h2>
+      </div>
+    </div>
+
+    <div class="card s3-summary">
+      <div class="s3-summary-copy">
+        <strong>核心矛盾</strong>
+        <p>逐点分类方法擅长识别“这个点像什么”，却不擅长理解“这一段地层正在如何演化”。真正缺失的不是精度数字，而是<strong style="color:var(--text);font-family:inherit;font-size:inherit;">地层上下文</strong>。</p>
+      </div>
+      <div class="s3-summary-right">
+        <div class="s3-summary-flow">
+          <span class="s3-flow-chip">独立点判断</span>
+          <span class="s3-flow-arrow">→</span>
+          <span class="s3-flow-chip">序列记忆</span>
+          <span class="s3-flow-arrow">→</span>
+          <span class="s3-flow-chip">全局关联</span>
+        </div>
+      </div>
+      <div class="s3-toggle">
+        <button type="button" class="s3-toggle-btn is-active" id="s3-btn-a">问题</button>
+        <button type="button" class="s3-toggle-btn" id="s3-btn-b">解法</button>
+      </div>
+    </div>
+
+    <!-- State A: Problem (pointwise methods) -->
+    <div id="s3-a" class="s3-state s3-state--problem">
+      <div class="card s3-problem-main">
+        <div class="s3-card-head">
+          <span class="s3-label">POINTWISE METHODS</span>
+          <h3 style="color:var(--a3);">传统逐点预测的局限</h3>
+        </div>
+        <p class="s3-problem-lead">随机森林、XGBoost 把每个深度点都当成<strong>独立样本</strong>，能给单点打标签，却无法理解整段地层的垂向演化。</p>
+        <div class="s3-stat-grid">
+          <div class="s3-stat">
+            <strong>78.81%</strong>
+            <span>RF accuracy</span>
+            <p>统计上优秀，但单点预测彼此割裂。</p>
+          </div>
+          <div class="s3-stat">
+            <strong style="color:var(--a3);">0</strong>
+            <span>sequence memory</span>
+            <p>对上覆、下伏层位没有连续理解。</p>
+          </div>
+        </div>
+        <div class="s3-problem-bottom">
+          <div class="s3-metaphor">
+            <span>WHY IT FEELS WRONG</span>
+            <p>像是读一本书时，每次只允许看一个词。词或许识别对了，但句子语义、上下承接与地层演化规律全部丢失。</p>
+          </div>
+          <div class="s3-problem-takeaway">
+            <span>GEOLOGIC CONSEQUENCE</span>
+            <p>表面上每个点都完成了分类，但真正需要的是：这一串点能否共同构成一个合理、连续的沉积旋回。</p>
+          </div>
+        </div>
+      </div>
+      <div class="s3-problem-side">
+        <div class="card s3-problem-card">
+          <div class="s3-card-head">
+            <span class="s3-label" style="color:var(--a2);">GEOLOGIC CONTEXT</span>
+            <h3>真正缺失的是什么？</h3>
+          </div>
+          <div class="s3-problem-list">
+            <div class="s3-problem-item">
+              <span class="s3-num-badge">01</span>
+              <div>
+                <strong class="s3-item-title">成因差异盲区</strong>
+                <p>无法区分"进积型"与"退积型"序列中相同岩性的成因差异。</p>
+              </div>
+            </div>
+            <div class="s3-problem-item">
+              <span class="s3-num-badge">02</span>
+              <div>
+                <strong class="s3-item-title">预测跳变失真</strong>
+                <p>预测结果逐点跳变，不连续，不符合沉积旋回规律。</p>
+              </div>
+            </div>
+            <div class="s3-problem-item">
+              <span class="s3-num-badge">03</span>
+              <div>
+                <strong class="s3-item-title">薄互层识别失效</strong>
+                <p>地层"记忆"在逐点采样中完全丢失，薄层边界无法精确定位。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State B: Solution (sequence models) — hidden initially -->
+    <div id="s3-b" class="s3-state s3-state--solution" hidden style="display:none;">
+      <div class="card s3-solution-card" style="border-top:3px solid var(--a4);">
+        <span style="font-family:'Courier New',monospace;font-size:0.65rem;color:var(--a4);letter-spacing:0.2em;">STEP 1</span>
+        <h3>LSTM</h3>
+        <p>先让模型具备“记住前文”的能力，把深度序列从离散点重构为有上下文的地层段。</p>
+        <ul>
+          <li>门控机制保留长程地层依赖；</li>
+          <li>能识别从冲刷面到顶部细粒沉积的完整河道序列。</li>
+        </ul>
+        <div class="s3-solution-tag" style="color:var(--a4);">单向 · 捕捉地层历史</div>
+      </div>
+      <div class="card s3-solution-card" style="border-top:3px solid var(--a2);">
+        <span style="font-family:'Courier New',monospace;font-size:0.65rem;color:var(--a2);letter-spacing:0.2em;">STEP 2</span>
+        <h3>BiLSTM</h3>
+        <p>再把“上文”和“下文”同时纳入判断，让某一深度点的解释由整段地层共同决定。</p>
+        <ul>
+          <li>从浅到深、从深到浅双向处理；</li>
+          <li>结合 2D ResNet 提取薄互层多尺度特征。</li>
+        </ul>
+        <div class="s3-solution-tag" style="color:var(--a2);">双向 · 薄层识别显著提升</div>
+      </div>
+      <div class="card s3-solution-card" style="border-top:3px solid var(--a1);">
+        <span style="font-family:'Courier New',monospace;font-size:0.65rem;color:var(--a1);letter-spacing:0.2em;">STEP 3 · PEAK</span>
+        <h3>Transformer</h3>
+        <p>最后用自注意力直接连接任意深度点，把长距离地质依赖显式纳入计算。</p>
+        <ul>
+          <li>任意位置间直接建模相关性；</li>
+          <li>更适合超长测井序列与复杂沉积旋回。</li>
+        </ul>
+        <div class="s3-solution-score">
+          <strong>≈95%</strong>
+          <span>准确率 · 200万样本</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S4: 1D → 2D MULTI-SCALE -->
+  <div class="slide" id="s4" style="gap:var(--gap);">
+    <!-- Header row -->
+    <div style="flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);">
+      <div>
+        <span class="kicker">从 1D 到 2D · MULTI-SCALE FEATURE EXTRACTION</span>
+        <h2>小波变换：让神经网络"看见"地质多尺度</h2>
+      </div>
+      <p class="muted" style="font-size:var(--body-size);text-align:right;padding-bottom:0.15rem;flex-shrink:0;">测井曲线 → 小波特征图<br>CNN + BiLSTM 协同建模</p>
+    </div>
+    <!-- Main: image left + 2×2 grid right -->
+    <div style="display:flex;gap:var(--gap);flex:1;min-height:0;">
+      <div class="card" style="flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0.5rem;background:rgba(255,255,255,0.06);">
+        <img src="image/logging_transit.png" alt="Well Log Wavelet Scalogram"
+          style="width:100%;height:100%;object-fit:contain;border-radius:calc(var(--radius) - 0.5rem);">
+      </div>
+      <div style="flex:1.4;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:var(--gap);min-height:0;">
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-left:3px solid var(--a2);">
+          <h3 style="margin-bottom:0.3rem;">一维曲线 → 二维特征图</h3>
+          <p style="font-size:var(--small-size);margin-top:auto;">小波分解将 GR / RT 曲线在<strong>不同频率分辨率</strong>下同时展开——粗尺度捕捉厚层旋回，细尺度识别薄互层</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-left:3px solid var(--a4);">
+          <h3 style="margin-bottom:0.3rem;color:var(--a4);">CNN + BiLSTM 架构</h3>
+          <p class="muted" style="font-size:var(--small-size);">空间频率 × 序列上下文</p>
+          <p style="font-size:var(--small-size);margin-top:auto;">CNN 提取空间-频率模式；BiLSTM 保留地层序列上下文，协同复现地质师多尺度解释过程</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;text-align:center;border-top:3px solid var(--a1);">
+          <div style="font-size:clamp(2rem,5vw,3.2rem);font-family:var(--font-display);font-weight:700;color:var(--a1);line-height:1.1;">≈95%</div>
+          <div class="muted" style="font-size:var(--small-size);margin-top:0.3rem;">Transformer 准确率 · 200万样本数据集验证</div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+          <h3 style="margin-bottom:0.3rem;">架构优势</h3>
+          <div style="display:grid;gap:0.4rem;margin-top:auto;">
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a2);flex-shrink:0;">✓</span>
+              <p style="font-size:var(--small-size);">薄互层检测精度<strong style="color:var(--a2);">显著提升</strong>，优于单纯 LSTM</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a2);flex-shrink:0;">✓</span>
+              <p style="font-size:var(--small-size);">KD-Tree 加速邻井检索，支持 Transformer 空间插值</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a2);flex-shrink:0;">✓</span>
+              <p style="font-size:var(--small-size);">3D 建模 RMSE=3.065，优于 IDW (4.248) 和 Kriging (3.586)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: MPS FOUNDATION -->
+  <div class="slide" id="s5" style="gap:var(--gap);">
+    <!-- Header row -->
+    <div style="flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);">
+      <div>
+        <span class="kicker">多点统计建相 · MPS FOUNDATION</span>
+        <h2>从井点到空间：统计模拟的基石与边界</h2>
+      </div>
+      <p class="muted" style="font-size:var(--body-size);text-align:right;padding-bottom:0.15rem;flex-shrink:0;">训练图像驱动 · 地震软约束<br>统计建模的能力边界</p>
+    </div>
+    <!-- Main: image left + 2×2 grid right -->
+    <div style="display:flex;gap:var(--gap);flex:1;min-height:0;">
+      <div class="card" style="flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0.5rem;background:rgba(255,255,255,0.06);">
+        <img src="image/mps.png" alt="MPS Training Image vs Realization"
+          style="width:100%;height:100%;object-fit:contain;border-radius:calc(var(--radius) - 0.5rem);">
+      </div>
+      <div style="flex:1.4;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:var(--gap);min-height:0;">
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a2);">
+          <h3 style="margin-bottom:0.3rem;">MPS 核心概念</h3>
+          <p style="font-size:var(--small-size);margin-top:auto;">以<strong>训练图像（TI）</strong>为先验，多点统计捕捉河道弯曲、点坝、三角洲复杂几何——远超传统变差函数</p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a2);">
+          <h3 style="margin-bottom:0.3rem;">FilterSIM + 地震约束</h3>
+          <div style="display:grid;gap:0.35rem;margin-top:auto;">
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a2);flex-shrink:0;">✓</span>
+              <p style="font-size:var(--small-size);">Direct Sampling：直接在 TI 中搜索匹配事件</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a2);flex-shrink:0;">✓</span>
+              <p style="font-size:var(--small-size);">地震软约束井间空间分布 · <strong style="color:var(--a2);">89.4%</strong> 准确率</p>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;border-top:3px solid var(--a3);">
+          <h3 style="color:var(--a3);margin-bottom:0.3rem;">MPS 的边界</h3>
+          <div style="display:grid;gap:0.35rem;margin-top:auto;">
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a3);flex-shrink:0;">▲</span>
+              <p style="font-size:var(--small-size);">非平稳性难题：单一 TI 无法表达方向性变化</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a3);flex-shrink:0;">▲</span>
+              <p style="font-size:var(--small-size);">计算代价高昂，制约大规模三维工程应用</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--a3);flex-shrink:0;">▲</span>
+              <p style="font-size:var(--small-size);">曲流河废弃河道复杂度超出模式匹配能力</p>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;background:rgba(212,168,75,0.06);border:1px solid rgba(212,168,75,0.25);">
+          <p style="color:var(--a1);font-weight:600;font-size:var(--body-size);">这就是为什么需要生成式 AI ↓</p>
+          <p class="muted" style="font-size:var(--small-size);margin-top:0.4rem;">扩散模型直接从数据学习分布，不依赖手工设计的训练图像</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S6: DIFFUSION INTUITION BRIDGE -->
+  <div class="slide" id="s5b" style="gap:var(--gap);">
+    <div style="flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);">
+      <div>
+        <span class="kicker">扩散模型直觉 · FROM NOISE TO GEOLOGY</span>
+        <h2>扩散不是“直接生成”，而是从噪声中逐步长出地质结构</h2>
+      </div>
+      <p class="muted" style="font-size:var(--body-size);text-align:right;padding-bottom:0.15rem;flex-shrink:0;">随机噪声先验 → 结构轮廓浮现 → 地质形态收敛</p>
+    </div>
+
+    <div class="s6-image-card">
+      <img src="image/diff.png" alt="Diffusion process: noise to emerging structure to geologic form">
+    </div>
+
+    <div class="s6-stage-strip">
+      <div class="s6-stage-card" style="border-top:3px solid var(--text-3);">
+        <span style="color:var(--text-3);">01 / NOISE PRIOR</span>
+        <h3>随机噪声先验</h3>
+        <p>起点不是一张现成地质图，而是没有明确结构的随机噪声场。</p>
+      </div>
+      <div class="s6-stage-card" style="border-top:3px solid var(--a1);">
+        <span style="color:var(--a1);">02 / STRUCTURE EMERGES</span>
+        <h3>结构轮廓浮现</h3>
+        <p>经过多步去噪，层理、通道和几何关系开始从模糊状态中显现出来。</p>
+      </div>
+      <div class="s6-stage-card" style="border-top:3px solid var(--a2);">
+        <span style="color:var(--a2);">03 / GEOLOGY CONVERGES</span>
+        <h3>地质形态收敛</h3>
+        <p>最终得到具备空间连续性和地质合理性的模型，而不是单纯“像图像”的结果。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7: LDM MECHANICS — FORWARD/REVERSE PROCESS -->
+  <div class="slide" id="s-ldm-arch" style="padding:0;gap:0;overflow:hidden;">
+    <!-- padded content area -->
+    <div style="padding:var(--pad);padding-bottom:var(--gap);display:flex;flex-direction:column;gap:var(--gap);flex-shrink:0;">
+      <div style="flex-shrink:0;">
+        <span class="kicker">扩散模型工作原理 · LDM MECHANICS</span>
+        <h2>从随机噪声到地质模型——两个过程</h2>
+      </div>
+      <!-- two cards side by side -->
+      <div style="display:flex;gap:var(--gap);">
+        <div class="card" style="flex:1;border-left:3px solid var(--text-3);">
+          <span style="font-family:'Courier New',monospace;font-size:0.65rem;color:var(--text-3);letter-spacing:0.2em;display:block;margin-bottom:0.5rem;">FORWARD PROCESS · 前向加噪</span>
+          <p>地质模型逐步叠加高斯噪声，经 T 步后转化为纯随机噪声——<span class="muted">此过程固定，无需学习</span></p>
+          <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.9rem;">
+            <div style="width:38px;height:38px;border-radius:5px;background:var(--a2);opacity:0.9;flex-shrink:0;"></div>
+            <span style="color:var(--text-3);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:var(--a2);opacity:0.55;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.18) 0,rgba(255,255,255,0.18) 1px,transparent 1px,transparent 4px);"></div>
+            <span style="color:var(--text-3);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:var(--surface-2);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.28) 0,rgba(255,255,255,0.28) 1px,transparent 1px,transparent 3px);opacity:0.85;"></div>
+            <span style="color:var(--text-3);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:rgba(90,110,130,0.6);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.32) 0,rgba(255,255,255,0.32) 1px,transparent 1px,transparent 2px);"></div>
+            <span class="muted" style="font-size:var(--small-size);margin-left:0.4rem;">纯噪声</span>
+          </div>
+        </div>
+        <div class="card" style="flex:1;border-left:3px solid var(--a1);">
+          <span style="font-family:'Courier New',monospace;font-size:0.65rem;color:var(--a1);letter-spacing:0.2em;display:block;margin-bottom:0.5rem;">REVERSE PROCESS · 反向去噪 ★ LEARNED</span>
+          <p>U-Net 学习从噪声中逐步恢复地质结构——<strong>这是模型训练的核心目标</strong>。每步预测并移除噪声分量，最终输出地质模型。</p>
+          <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.9rem;">
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:rgba(90,110,130,0.6);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.32) 0,rgba(255,255,255,0.32) 1px,transparent 1px,transparent 2px);"></div>
+            <span style="color:var(--a1);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:var(--a1);opacity:0.35;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.2) 0,rgba(255,255,255,0.2) 1px,transparent 1px,transparent 3px);"></div>
+            <span style="color:var(--a1);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:var(--a1);opacity:0.65;"></div>
+            <span style="color:var(--a1);font-size:0.75rem;">→</span>
+            <div style="width:38px;height:38px;border-radius:5px;flex-shrink:0;background:var(--a1);opacity:0.92;"></div>
+            <span class="muted" style="font-size:var(--small-size);margin-left:0.4rem;">地质模型</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- full-width image at bottom with smooth top fade -->
+    <div style="flex:1;min-height:0;overflow:hidden;">
+      <img src="image/diffusion1.png" alt="Diffusion Denoising Steps"
+        style="width:100%;height:100%;object-fit:cover;object-position:center 40%;display:block;
+               -webkit-mask-image:linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 25%, black 55%);
+               mask-image:linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 25%, black 55%);">
+    </div>
+  </div>
+
+
+  <!-- S10★: AUTOMATED WORKFLOW — ANIMATED PIPELINE (HERO 3) -->
+  <div class="slide" id="s8" style="gap:var(--gap);">
+    <div style="flex-shrink:0;">
+      <span class="kicker">自动化工作流 · END-TO-END AUTOMATION · HERO 3</span>
+      <h2>从测井到三维模型——一键式流程正在成形</h2>
+    </div>
+    <div class="card s8-flow-shell">
+      <div class="s8-flow-hero">
+        <div class="s8-flow-note">同一条工作流里，数据、识别、生成与建模是连续传递的</div>
+        <svg class="s8-flow-svg" viewBox="0 0 1000 420" aria-label="Curved end-to-end automation flow">
+          <path class="s8-flow-glow" d="M84 272 C 176 184, 286 126, 402 148 S 614 278, 722 246 S 878 132, 930 166"></path>
+          <path class="s8-flow-base" d="M84 272 C 176 184, 286 126, 402 148 S 614 278, 722 246 S 878 132, 930 166"></path>
+          <path class="s8-flow-accent" d="M84 272 C 176 184, 286 126, 402 148 S 614 278, 722 246 S 878 132, 930 166"></path>
+
+          <circle class="s8-node-dot" cx="92" cy="266" r="13" fill="#D4A84B"></circle>
+          <circle class="s8-node-dot" cx="372" cy="147" r="13" fill="#3CC4BC"></circle>
+          <circle class="s8-node-dot" cx="676" cy="255" r="13" fill="#E06E5A"></circle>
+          <circle class="s8-node-dot" cx="914" cy="173" r="13" fill="#7B9FD4"></circle>
+        </svg>
+
+        <div class="s8-stage s8-stage--1" style="border-top:3px solid var(--a1);">
+          <span style="color:var(--a1);">01 / INPUT</span>
+          <h3>测井曲线</h3>
+          <p>GR / RT / DEN / CNL 等连续输入，为后续识别与建模提供基础语境。</p>
+        </div>
+
+        <div class="s8-stage s8-stage--2" style="border-top:3px solid var(--a2);">
+          <span style="color:var(--a2);">02 / RECOGNIZE</span>
+          <h3>岩相识别</h3>
+          <p>序列模型把离散测井点组织成有上下文的相段，而不是孤立标签。</p>
+        </div>
+
+        <div class="s8-stage s8-stage--3" style="border-top:3px solid var(--a3);">
+          <span style="color:var(--a3);">03 / GENERATE</span>
+          <h3>相图生成</h3>
+          <p>扩散模型把井点约束、空间先验与地质统计整合成连续的相图分布。</p>
+        </div>
+
+        <div class="s8-stage s8-stage--4" style="border-top:3px solid var(--a4);">
+          <span style="color:var(--a4);">04 / BUILD</span>
+          <h3>三维模型</h3>
+          <p>二维结果被装配进三维地质框架，最终进入可解释、可更新的模型交付。</p>
+        </div>
+      </div>
+
+      <div class="s8-support-strip">
+        <div class="s8-support-card" style="border-top:3px solid var(--a1);--delay:0.56s;">
+          <span style="color:var(--a1);">WLFM FOUNDATION MODEL</span>
+          <h3>基础模型迁移</h3>
+          <p>1,200 口井预训练，把“已有知识”迁移到新区块，减少每次从零开始建模。</p>
+        </div>
+        <div class="s8-support-card" style="border-top:3px solid var(--a2);--delay:0.68s;">
+          <span style="color:var(--a2);">AUTOML</span>
+          <h3>自动化模型选择</h3>
+          <p>自动搜索超参数与模型组合，让没有 AI 背景的团队也能稳定复用流程。</p>
+        </div>
+        <div class="s8-support-card" style="border-top:3px solid var(--a4);--delay:0.80s;">
+          <span style="color:var(--a4);">INTEGRATED QI PLATFORM</span>
+          <h3>集成量化解释</h3>
+          <p>把 ML、岩石物理和地质统计接在一条链上，让输出直接服务解释与决策。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S12: CLOSING -->
+  <div class="slide" id="s10" style="justify-content:center;align-items:center;text-align:center;">
+    <div style="max-width:min(90%,700px);margin:auto;">
+      <span class="kicker" style="margin-bottom:2rem;display:block;justify-content:center;">结语 · CLOSING</span>
+      <h2 style="font-size:clamp(1.8rem,5vw,3rem);line-height:1.25;margin-bottom:1.5rem;">
+        数据驱动不是终点<br>
+        <span style="color:var(--a1);">地质认知是不可替代的先验</span>
+      </h2>
+      <p class="muted" style="font-size:var(--h3-size);line-height:1.6;margin-bottom:2.5rem;">
+        AI 加速的是计算<br>不可替代的是地质判断
+      </p>
+      <div style="display:flex;gap:0.6rem;justify-content:center;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:var(--small-size);color:var(--a1);font-family:'Courier New',monospace;letter-spacing:0.1em;">测井数据</span>
+        <span class="muted">→</span>
+        <span style="font-size:var(--small-size);color:var(--a2);font-family:'Courier New',monospace;letter-spacing:0.1em;">岩相分类</span>
+        <span class="muted">→</span>
+        <span style="font-size:var(--small-size);color:var(--a3);font-family:'Courier New',monospace;letter-spacing:0.1em;">相图生成</span>
+        <span class="muted">→</span>
+        <span style="font-size:var(--small-size);color:var(--a4);font-family:'Courier New',monospace;letter-spacing:0.1em;">建模自动化</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="nav">
+  <span id="counter">01 / 09</span>
+  <button id="btn-prev" aria-label="上一页">←</button>
+  <button id="btn-next" aria-label="下一页">→</button>
+</div>
+<div id="pbar-wrap"><div id="pbar" style="width: 50%;"></div></div>
+
+<script>
+const slides = () => Array.from(document.querySelectorAll('.slide'));
+const counter = document.getElementById('counter');
+const pbar = document.getElementById('pbar');
+
+function buildPartUrl(baseUrl, slideTarget) {
+  const url = new URL(baseUrl, window.location.href);
+  if (slideTarget !== undefined && slideTarget !== null) {
+    url.searchParams.set('slide', String(slideTarget));
+  }
+  return url.href;
+}
+
+function consumeRequestedSlideIndex(totalSlides) {
+  const params = new URLSearchParams(window.location.search);
+  const requestedSlide = params.get('slide');
+  if (!requestedSlide) return 0;
+
+  let targetIndex = 0;
+  if (requestedSlide === 'last') {
+    targetIndex = totalSlides - 1;
+  } else if (requestedSlide !== 'first') {
+    const parsedIndex = Number.parseInt(requestedSlide, 10);
+    if (Number.isFinite(parsedIndex)) {
+      targetIndex = parsedIndex;
+    }
+  }
+
+  params.delete('slide');
+  const cleanSearch = params.toString();
+  const cleanUrl = `${window.location.pathname}${cleanSearch ? `?${cleanSearch}` : ''}${window.location.hash}`;
+  window.history.replaceState({}, '', cleanUrl);
+
+  return Math.max(0, Math.min(targetIndex, totalSlides - 1));
+}
+
+let cur = 0;
+const PREV_PART_URL = buildPartUrl('../part1/index.html', 'last');
+const NEXT_PART_URL = buildPartUrl('../part3/pinn_slides.html', 'first');
+
+function go(n) {
+  const ss = slides();
+  if (n < 0) {
+    window.location.href = PREV_PART_URL;
+    return;
+  }
+  if (n >= ss.length) {
+    window.location.href = NEXT_PART_URL;
+    return;
+  }
+  ss[cur].classList.remove('active');
+  cur = n;
+  ss[cur].classList.add('active');
+  counter.textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(ss.length).padStart(2, '0');
+  pbar.style.width = ((cur + 1) / ss.length * 100) + '%';
+}
+
+document.getElementById('btn-next').addEventListener('click', () => go(cur + 1));
+document.getElementById('btn-prev').addEventListener('click', () => go(cur - 1));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(cur + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(cur - 1);
+  if (e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+});
+
+go(consumeRequestedSlideIndex(slides().length));
+
+// S3 Toggle
+function s3show(state) {
+  const a = document.getElementById('s3-a');
+  const b = document.getElementById('s3-b');
+  const btnA = document.getElementById('s3-btn-a');
+  const btnB = document.getElementById('s3-btn-b');
+  if (!a || !b || !btnA || !btnB) return;
+
+  const showProblem = state === 'a';
+  a.hidden = !showProblem;
+  b.hidden = showProblem;
+  a.style.display = showProblem ? 'grid' : 'none';
+  b.style.display = showProblem ? 'none' : 'grid';
+  btnA.classList.toggle('is-active', showProblem);
+  btnB.classList.toggle('is-active', !showProblem);
+}
+
+document.getElementById('s3-btn-a')?.addEventListener('click', () => s3show('a'));
+document.getElementById('s3-btn-b')?.addEventListener('click', () => s3show('b'));
+s3show('a');
+
+// S6 Stepper
+let s6cur = 0;
+const s6steps = ['s6-step1', 's6-step2', 's6-step3'];
+function s6go(dir) {
+  document.getElementById(s6steps[s6cur]).style.display = 'none';
+  s6cur = Math.max(0, Math.min(2, s6cur + dir));
+  document.getElementById(s6steps[s6cur]).style.display = 'grid';
+  document.getElementById('s6-counter').textContent =
+    String(s6cur + 1).padStart(2, '0') + ' / 03';
+}
+</script>
+<script src="../shared/part-jump-menu.js?v=20260312b"></script>
+
+
+
+
+
+
+
+
+
+<readwise-tooltip-container></readwise-tooltip-container></body></html>

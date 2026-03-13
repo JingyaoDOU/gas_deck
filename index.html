@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI赋能气田开发</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #F4F1EC;
+      height: 260vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: block;
+    }
+
+    /* ---- UI Overlay ---- */
+    #ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* monospace utility */
+    .mono {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10px;
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      color: #999;
+      line-height: 1.9;
+    }
+
+    /* corner anchors */
+    #label-tl { position: absolute; top: 38px; left: 48px; }
+    #label-tr { position: absolute; top: 38px; right: 48px; text-align: right; }
+
+    /* ---- Main Headline ---- */
+    #headline {
+      position: absolute;
+      bottom: 14%;
+      left: 48px;
+      font-size: clamp(52px, 8.5vw, 120px);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: #1A1A1A;
+      mix-blend-mode: multiply;
+      opacity: 0;
+      transition: opacity 1.6s ease;
+    }
+
+    #subtitle {
+      position: absolute;
+      bottom: 12.2%;
+      left: 51px;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(9px, 1.1vw, 12px);
+      letter-spacing: 0.30em;
+      color: #888;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 2s ease 0.9s;
+    }
+
+    /* ---- Chapter Strip — full-width bottom bar ---- */
+    #chapters-row {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      background: rgba(244,241,236,0.94);
+      border-top: 1px solid rgba(26,96,128,0.22);
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.22,1,0.36,1);
+      pointer-events: all;
+    }
+
+    .ch {
+      flex: 1;
+      padding: 12px 22px 15px;
+      border-right: 1px solid rgba(26,96,128,0.12);
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.25s ease, transform 0.25s ease;
+    }
+    .ch:last-child { border-right: none; }
+    .ch:hover,
+    .ch:focus-visible {
+      background: rgba(26,96,128,0.06);
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    /* Large watermark numeral — visual anchor that draws the eye first */
+    .ch-num {
+      display: block;
+      font-family: 'Arial Black', Arial, sans-serif;
+      font-size: clamp(38px, 4.8vw, 62px);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      color: rgba(26,96,128,0.12);
+      margin-bottom: 2px;
+      user-select: none;
+    }
+
+    /* Bold Chinese title — primary read target */
+    .ch-title {
+      display: block;
+      font-size: clamp(14px, 1.55vw, 20px);
+      font-weight: 800;
+      color: #0E0E0E;
+      line-height: 1.2;
+    }
+
+    /* Monospace English label */
+    .ch-en {
+      display: block;
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.22em;
+      color: #888;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+
+    /* ---- River annotation — appears when river forms ---- */
+    #river-label {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.38em;
+      color: #1A6080;
+      text-transform: uppercase;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 1s ease 0.8s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ---- Scroll Hint ---- */
+    #scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.28em;
+      color: #BBB;
+      text-transform: uppercase;
+      text-align: center;
+      transition: opacity 0.4s;
+      animation: nudge 2.2s ease-in-out infinite;
+    }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ---- Continue hint — sits above the chapter strip ---- */
+    #continue-hint {
+      position: absolute;
+      bottom: 100px;
+      right: 48px;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      color: #666;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      pointer-events: all;
+      cursor: pointer;
+    }
+
+    /* ---- Progress bar ---- */
+    #pbar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, #1E5F77, #5BBACB, #9DD4DC);
+      z-index: 20;
+      transition: width 0.06s linear;
+    }
+
+    /* ---- Custom cursor ---- */
+    #cursor {
+      position: fixed;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #1A1A1A;
+      pointer-events: none;
+      z-index: 100;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: multiply;
+      transition: transform 0.08s ease;
+    }
+  </style>
+</head>
+
+<body>
+<div id="pbar"></div>
+<canvas id="canvas"></canvas>
+<div id="cursor"></div>
+
+<div id="ui">
+  <!-- Top-left label -->
+  <div id="label-tl" class="mono">
+    辫状河沉积系统<br>
+    <span style="opacity:0.45">Braided Fluvial Opening</span>
+  </div>
+
+  <!-- Top-right: live state -->
+  <div id="label-tr" class="mono">
+    粒子数 // 5000<br>
+    <span style="opacity:0.45" id="state-sub">Scatter State</span>
+  </div>
+
+  <!-- Main headline -->
+  <div id="headline">AI赋能<br>气田开发</div>
+  <div id="subtitle">智能地质建模 · 机器学习 · 储层预测</div>
+
+  <!-- Chapter strip — full-width bottom bar, reveals when river forms -->
+  <div id="chapters-row">
+    <div class="ch" id="ch1" data-target="part1/index.html" role="button" tabindex="0" aria-label="进入第一部分：AI发展概述">
+      <span class="ch-num">01</span>
+      <span class="ch-title">AI发展概述</span>
+      <span class="ch-en">AI Overview</span>
+    </div>
+    <div class="ch" id="ch2" data-target="part2/index.html" role="button" tabindex="0" aria-label="进入第二部分：地质与地震建模">
+      <span class="ch-num">02</span>
+      <span class="ch-title">地质与地震建模</span>
+      <span class="ch-en">Geological Modeling</span>
+    </div>
+    <div class="ch" id="ch3" data-target="part3/pinn_slides.html" role="button" tabindex="0" aria-label="进入第三部分：油藏数值模拟">
+      <span class="ch-num">03</span>
+      <span class="ch-title">油藏数值模拟</span>
+      <span class="ch-en">Reservoir Simulation</span>
+    </div>
+    <div class="ch" id="ch4" data-target="part4/index.html" role="button" tabindex="0" aria-label="进入第四部分：落地实施策略">
+      <span class="ch-num">04</span>
+      <span class="ch-title">落地实施策略</span>
+      <span class="ch-en">Implementation</span>
+    </div>
+  </div>
+
+  <!-- River annotation — names the shape once it forms -->
+  <div id="river-label">辫状河沉积体系 · Braided River System</div>
+
+  <!-- Scroll hint -->
+  <div id="scroll-hint">向下滚动 ↓<br><span style="font-size:8px;letter-spacing:0.2em">Scroll to explore</span></div>
+
+  <!-- Continue -->
+  <div id="continue-hint" onclick="navigate()">进入演示 // Enter Deck →</div>
+</div>
+
+<script>
+// ============================================================
+//  BRAIDED RIVER PARTICLE SYSTEM
+//  WebGL2 · Spring Physics · Scroll-Driven · 3 500 Particles
+// ============================================================
+
+const CFG = {
+  N:         5000,
+  SPRING:    0.055,   // faster convergence → river forms crisply
+  DAMP:      0.882,
+  NOISE:     0.18,
+  MOUSE_R:   130,
+  MOUSE_F:   11,
+  BG:        [244/255, 241/255, 236/255, 1.0],
+};
+
+// ---- Geology-authentic palette: RGBA 0–1 ----
+// Teal water channels (matching part1 --accent #0f766e) vs warm gold sandbars
+const PAL = {
+  w0: [0.03, 0.25, 0.26, 0.97],   // deep dark teal
+  w1: [0.05, 0.36, 0.34, 0.94],   // dark teal
+  w2: [0.06, 0.46, 0.43, 0.90],   // accent teal (#0f766e)
+  w3: [0.16, 0.60, 0.56, 0.86],   // light teal
+  s0: [0.85, 0.64, 0.18, 0.95],   // rich amber-gold (darkest bar)
+  s1: [0.90, 0.74, 0.32, 0.92],   // warm gold
+  s2: [0.94, 0.84, 0.52, 0.90],   // pale gold-sand
+  s3: [0.80, 0.58, 0.14, 0.93],   // dark burnt gold
+  g0: [0.64, 0.58, 0.48, 0.88],   // warm gravel
+  g1: [0.55, 0.52, 0.48, 0.85],   // dark gravel
+  b0: [0.36, 0.28, 0.18, 0.92],   // dark bank
+  b1: [0.48, 0.40, 0.28, 0.87],   // brown bank
+};
+const PKEYS = Object.keys(PAL);
+
+function rpal(arr) { return PAL[arr[arr.length * Math.random() | 0]]; }
+
+// ---- Six channel centrelines — spread across full page y ∈ [0.12, 0.88] ----
+// Varied phases create braiding nodes where adjacent channels converge/diverge
+const CH0 = t => 0.12 + 0.040 * Math.sin(t * Math.PI * 2.4 + 0.00);
+const CH1 = t => 0.27 + 0.045 * Math.sin(t * Math.PI * 2.0 + 1.20);
+const CH2 = t => 0.42 + 0.050 * Math.sin(t * Math.PI * 2.3 + 2.80);
+const CH3 = t => 0.58 + 0.050 * Math.sin(t * Math.PI * 1.9 + 0.60);
+const CH4 = t => 0.73 + 0.045 * Math.sin(t * Math.PI * 2.1 + 3.40);
+const CH5 = t => 0.88 + 0.040 * Math.sin(t * Math.PI * 2.5 + 1.80);
+
+// Narrow channel half-widths — crisp, distinct channel edges
+const CW0 = t => 0.012 + 0.007 * Math.abs(Math.sin(t * Math.PI * 5.0 + 0.0));
+const CW1 = t => 0.015 + 0.008 * Math.abs(Math.sin(t * Math.PI * 4.2 + 1.2));
+const CW2 = t => 0.014 + 0.007 * Math.abs(Math.sin(t * Math.PI * 4.8 + 2.3));
+const CW3 = t => 0.016 + 0.008 * Math.abs(Math.sin(t * Math.PI * 4.0 + 0.8));
+const CW4 = t => 0.014 + 0.007 * Math.abs(Math.sin(t * Math.PI * 4.6 + 3.0));
+const CW5 = t => 0.012 + 0.007 * Math.abs(Math.sin(t * Math.PI * 5.2 + 1.6));
+
+// ---- Generate river target positions ----
+function generateTargets(count, W, H) {
+  const tgts = [];
+  const zones = [
+    { id: 'ch0',   w: 0.09 },
+    { id: 'bar01', w: 0.06 },
+    { id: 'ch1',   w: 0.10 },
+    { id: 'bar12', w: 0.06 },
+    { id: 'ch2',   w: 0.10 },
+    { id: 'bar23', w: 0.06 },
+    { id: 'ch3',   w: 0.12 },
+    { id: 'bar34', w: 0.06 },
+    { id: 'ch4',   w: 0.10 },
+    { id: 'bar45', w: 0.06 },
+    { id: 'ch5',   w: 0.09 },
+    { id: 'banks', w: 0.04 },
+    { id: 'outer', w: 0.06 },
+  ];
+  const total = zones.reduce((s, z) => s + z.w, 0);
+
+  for (let i = 0; i < count; i++) {
+    let r = Math.random() * total, zone = 'outer';
+    for (const z of zones) { r -= z.w; if (r <= 0) { zone = z.id; break; } }
+
+    const t  = Math.random();
+    const xn = 0.04 + t * 0.92;
+    let yn, col;
+
+    switch (zone) {
+      case 'ch0': {
+        yn  = CH0(t) + (Math.random() * 2 - 1) * CW0(t);
+        col = rpal(['w0','w1','w1','w2','w3']);
+        break;
+      }
+      case 'ch1': {
+        yn  = CH1(t) + (Math.random() * 2 - 1) * CW1(t);
+        col = rpal(['w0','w0','w1','w2','w2','w3']);
+        break;
+      }
+      case 'ch2': {
+        yn  = CH2(t) + (Math.random() * 2 - 1) * CW2(t);
+        col = rpal(['w0','w1','w1','w2','w3']);
+        break;
+      }
+      case 'ch3': {
+        yn  = CH3(t) + (Math.random() * 2 - 1) * CW3(t);
+        col = rpal(['w0','w0','w1','w2','w2','w3']);
+        break;
+      }
+      case 'ch4': {
+        yn  = CH4(t) + (Math.random() * 2 - 1) * CW4(t);
+        col = rpal(['w0','w1','w2','w2','w3']);
+        break;
+      }
+      case 'ch5': {
+        yn  = CH5(t) + (Math.random() * 2 - 1) * CW5(t);
+        col = rpal(['w0','w1','w1','w2','w3']);
+        break;
+      }
+      case 'bar01': {
+        const y0 = CH0(t), y1 = CH1(t), gap = y1 - y0;
+        if (gap < 0.05) {
+          yn  = (y0 + y1) / 2 + (Math.random() * 2 - 1) * gap * 0.45;
+          col = rpal(['w1','w2','w3']);
+        } else {
+          yn  = (y0 + y1) / 2 + (Math.random() * 2 - 1) * (gap - 0.04) / 2;
+          col = rpal(['s0','s1','s1','s2','s3','g0','g1']);
+        }
+        break;
+      }
+      case 'bar12': {
+        const y1 = CH1(t), y2 = CH2(t), gap = y2 - y1;
+        if (gap < 0.05) {
+          yn  = (y1 + y2) / 2 + (Math.random() * 2 - 1) * gap * 0.45;
+          col = rpal(['w1','w2','w3']);
+        } else {
+          yn  = (y1 + y2) / 2 + (Math.random() * 2 - 1) * (gap - 0.04) / 2;
+          col = rpal(['s0','s1','s1','s2','s3','g0','g1']);
+        }
+        break;
+      }
+      case 'bar23': {
+        const y2 = CH2(t), y3 = CH3(t), gap = y3 - y2;
+        if (gap < 0.05) {
+          yn  = (y2 + y3) / 2 + (Math.random() * 2 - 1) * gap * 0.45;
+          col = rpal(['w1','w2','w3']);
+        } else {
+          yn  = (y2 + y3) / 2 + (Math.random() * 2 - 1) * (gap - 0.04) / 2;
+          col = rpal(['s0','s1','s1','s2','s3','g0','g1','g1']);
+        }
+        break;
+      }
+      case 'bar34': {
+        const y3 = CH3(t), y4 = CH4(t), gap = y4 - y3;
+        if (gap < 0.05) {
+          yn  = (y3 + y4) / 2 + (Math.random() * 2 - 1) * gap * 0.45;
+          col = rpal(['w1','w2','w3']);
+        } else {
+          yn  = (y3 + y4) / 2 + (Math.random() * 2 - 1) * (gap - 0.04) / 2;
+          col = rpal(['s0','s1','s1','s2','s3','g0','g1']);
+        }
+        break;
+      }
+      case 'bar45': {
+        const y4 = CH4(t), y5 = CH5(t), gap = y5 - y4;
+        if (gap < 0.05) {
+          yn  = (y4 + y5) / 2 + (Math.random() * 2 - 1) * gap * 0.45;
+          col = rpal(['w1','w2','w3']);
+        } else {
+          yn  = (y4 + y5) / 2 + (Math.random() * 2 - 1) * (gap - 0.04) / 2;
+          col = rpal(['s0','s1','s1','s2','s3','g0','g1','g1']);
+        }
+        break;
+      }
+      case 'banks': {
+        yn  = Math.random() < 0.5
+          ? Math.random() * 0.06
+          : 0.94 + Math.random() * 0.06;
+        col = rpal(['b0','b1','g0','g0','g1']);
+        break;
+      }
+      default: { // outer
+        yn = Math.random();
+        col = rpal(PKEYS);
+        break;
+      }
+    }
+
+    yn = Math.max(0.01, Math.min(0.99, yn));
+    tgts.push({ x: xn * W, y: yn * H, col: [...col], zone });
+  }
+  return tgts;
+}
+
+// ============================================================
+//  WEBGL2 SETUP
+// ============================================================
+const VERT_SRC = `#version 300 es
+precision highp float;
+in vec2  aPos;
+in float aSize;
+in vec4  aColor;
+uniform vec2 uRes;
+out vec4 vColor;
+void main() {
+  vec2 c = (aPos / uRes) * 2.0 - 1.0;
+  gl_Position = vec4(c.x, -c.y, 0.0, 1.0);
+  gl_PointSize = aSize;
+  vColor = aColor;
+}`;
+
+const FRAG_SRC = `#version 300 es
+precision mediump float;
+in  vec4 vColor;
+out vec4 fragColor;
+void main() {
+  vec2  uv = gl_PointCoord - 0.5;
+  float d  = length(uv);
+  if (d > 0.5) discard;
+  float a = 1.0 - smoothstep(0.36, 0.50, d);
+  fragColor = vec4(vColor.rgb, vColor.a * a);
+}`;
+
+let canvas, gl, prog;
+let posLoc, sizeLoc, colLoc, resLoc;
+let vao, posBuf, sizeBuf, colBuf;
+
+function initGL() {
+  canvas = document.getElementById('canvas');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  gl = canvas.getContext('webgl2', {
+    alpha: false, antialias: true,
+    premultipliedAlpha: false,
+    powerPreference: 'high-performance',
+  });
+  if (!gl) return false;
+
+  function makeShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  prog = gl.createProgram();
+  gl.attachShader(prog, makeShader(gl.VERTEX_SHADER,   VERT_SRC));
+  gl.attachShader(prog, makeShader(gl.FRAGMENT_SHADER, FRAG_SRC));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(prog)); return false;
+  }
+
+  posLoc  = gl.getAttribLocation(prog,  'aPos');
+  sizeLoc = gl.getAttribLocation(prog,  'aSize');
+  colLoc  = gl.getAttribLocation(prog,  'aColor');
+  resLoc  = gl.getUniformLocation(prog, 'uRes');
+
+  vao    = gl.createVertexArray();
+  posBuf = gl.createBuffer();
+  sizeBuf= gl.createBuffer();
+  colBuf = gl.createBuffer();
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(...CFG.BG);
+  return true;
+}
+
+// ============================================================
+//  PARTICLE STATE
+// ============================================================
+let W, H;
+let parts   = [];
+let progress = 0;
+let time     = 0;
+let mX = -9999, mY = -9999;
+
+// Pre-allocated typed arrays (avoid GC churn)
+const posData  = new Float32Array(CFG.N * 2);
+const sizeData = new Float32Array(CFG.N);
+const colData  = new Float32Array(CFG.N * 4);
+
+function randomSize(zone) {
+  if (zone === 'outer') return 1 + Math.random() * 2.5;  // tiny: 1–3.5 px
+
+  const r = Math.random();
+  if (zone === 'bar01' || zone === 'bar12') {
+    // sandbars: favour medium-large (look like gravel/sand grains)
+    if (r < 0.40) return 5  + Math.random() * 6;   // mid   5–11 px
+    if (r < 0.78) return 11 + Math.random() * 9;   // large 11–20 px
+    return               20 + Math.random() * 12;  // XL    20–32 px
+  }
+  // water channels: varied fine-to-mid
+  if (r < 0.55) return 2  + Math.random() * 4;   // small  2–6 px
+  if (r < 0.82) return 6  + Math.random() * 7;   // mid    6–13 px
+  if (r < 0.95) return 13 + Math.random() * 8;   // large 13–21 px
+  return               21 + Math.random() * 12;  // XL    21–33 px
+}
+
+function initParticles() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  const tgts = generateTargets(CFG.N, W, H);
+
+  parts = tgts.map(tgt => {
+    const sx = Math.random() * W;
+    const sy = Math.random() * H;
+    return {
+      x: sx, y: sy,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      tx: tgt.x, ty: tgt.y,   // river target
+      sx, sy,                  // scatter target
+      size: randomSize(tgt.zone),
+      col:  tgt.col,
+      phi:  Math.random() * Math.PI * 2,
+      spd:  0.010 + Math.random() * 0.025,
+    };
+  });
+}
+
+// ============================================================
+//  PHYSICS UPDATE
+// ============================================================
+function update() {
+  time += 0.008;
+
+  for (const p of parts) {
+    // Interpolated target driven by scroll progress
+    const tx = p.sx + (p.tx - p.sx) * progress;
+    const ty = p.sy + (p.ty - p.sy) * progress;
+
+    // Spring toward target
+    p.vx += (tx - p.x) * CFG.SPRING;
+    p.vy += (ty - p.y) * CFG.SPRING;
+
+    // Organic noise — fade to near-zero when river is fully formed
+    const noiseAmt = CFG.NOISE * (1 - progress);
+    p.vx += Math.sin(p.phi + time * p.spd * 2.2) * noiseAmt;
+    p.vy += Math.cos(p.phi * 1.3 + time * p.spd * 1.9) * noiseAmt;
+
+    // Mouse repulsion
+    const dx = p.x - mX, dy = p.y - mY;
+    const d2 = dx * dx + dy * dy;
+    const R2 = CFG.MOUSE_R * CFG.MOUSE_R;
+    if (d2 < R2 && d2 > 0) {
+      const d = Math.sqrt(d2);
+      const f = (CFG.MOUSE_R - d) / CFG.MOUSE_R * CFG.MOUSE_F;
+      p.vx += (dx / d) * f;
+      p.vy += (dy / d) * f;
+    }
+
+    p.vx *= CFG.DAMP;
+    p.vy *= CFG.DAMP;
+    p.x  += p.vx;
+    p.y  += p.vy;
+  }
+}
+
+// ============================================================
+//  WEBGL RENDER
+// ============================================================
+function render() {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(prog);
+  gl.uniform2f(resLoc, canvas.width, canvas.height);
+
+  for (let i = 0; i < CFG.N; i++) {
+    const p = parts[i];
+    posData [i * 2]     = p.x;
+    posData [i * 2 + 1] = p.y;
+    sizeData[i]         = p.size;
+    colData [i * 4]     = p.col[0];
+    colData [i * 4 + 1] = p.col[1];
+    colData [i * 4 + 2] = p.col[2];
+    colData [i * 4 + 3] = p.col[3];
+  }
+
+  gl.bindVertexArray(vao);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, posData, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, sizeData, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(sizeLoc);
+  gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, colData, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(colLoc);
+  gl.vertexAttribPointer(colLoc, 4, gl.FLOAT, false, 0, 0);
+
+  gl.drawArrays(gl.POINTS, 0, CFG.N);
+  gl.bindVertexArray(null);
+}
+
+// ============================================================
+//  SCROLL CONTROLLER
+// ============================================================
+let clustered   = false;
+let navigating  = false;
+let clusterPx, exitPx;
+
+function initScrollConfig() {
+  clusterPx = window.innerHeight;        // 100 vh → fully formed
+  exitPx    = window.innerHeight * 1.75; // 175 vh → navigate
+}
+
+function onScroll() {
+  const sy = window.scrollY;
+  progress = Math.min(1.0, sy / clusterPx);
+
+  // Progress bar
+  document.getElementById('pbar').style.width = (progress * 100) + '%';
+
+  // Scroll hint fades with progress
+  document.getElementById('scroll-hint').style.opacity =
+    String(Math.max(0, 1 - progress * 3));
+
+  // State text update
+  const sub = document.getElementById('state-sub');
+  if (progress < 0.05)     sub.textContent = 'Scatter State';
+  else if (progress < 0.95) sub.textContent = 'Clustering ' + Math.round(progress * 100) + '%';
+  else                       sub.textContent = 'Braided River ◉';
+
+  // Chapter labels emerge at 85 %+
+  if (progress >= 0.85 && !clustered) {
+    clustered = true;
+    // River annotation first, then the full chapter strip slides up
+    document.getElementById('river-label').style.opacity = '1';
+    setTimeout(() => {
+      const row = document.getElementById('chapters-row');
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+    }, 600);
+  }
+
+  // Continue hint
+  document.getElementById('continue-hint').style.opacity =
+    String(Math.max(0, (progress - 0.96) * 25));
+
+  // Navigate on deep scroll
+  if (sy >= exitPx && !navigating) {
+    navigating = true;
+    navigateTo('part1/index.html');
+  }
+}
+
+function navigateTo(href) {
+  if (!href) return;
+  canvas.style.transition = 'opacity 0.9s ease';
+  canvas.style.opacity    = '0';
+  document.getElementById('ui').style.transition = 'opacity 0.9s ease';
+  document.getElementById('ui').style.opacity    = '0';
+  setTimeout(() => { window.location.href = href; }, 900);
+}
+
+function navigate() {
+  navigateTo('part1/index.html');
+}
+
+function bindChapterNavigation() {
+  const chapters = document.querySelectorAll('#chapters-row .ch[data-target]');
+  chapters.forEach((chapter) => {
+    const href = chapter.dataset.target;
+    chapter.addEventListener('click', () => {
+      if (navigating) return;
+      navigating = true;
+      navigateTo(href);
+    });
+    chapter.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      if (navigating) return;
+      navigating = true;
+      navigateTo(href);
+    });
+  });
+}
+
+// ============================================================
+//  RESIZE
+// ============================================================
+function onResize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  initScrollConfig();
+
+  const tgts = generateTargets(CFG.N, W, H);
+  for (let i = 0; i < CFG.N; i++) {
+    parts[i].tx = tgts[i].x;
+    parts[i].ty = tgts[i].y;
+  }
+}
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  initScrollConfig();
+  bindChapterNavigation();
+
+  if (!initGL()) {
+    document.body.innerHTML =
+      '<p style="padding:40px;font-family:monospace;color:#555">' +
+      'WebGL2 not supported in this browser.</p>';
+    return;
+  }
+
+  initParticles();
+
+  // Fade in headline
+  requestAnimationFrame(() => {
+    document.getElementById('headline').style.opacity = '1';
+    document.getElementById('subtitle').style.opacity = '1';
+  });
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onResize);
+
+  // Mouse tracking + custom cursor
+  const cursorEl = document.getElementById('cursor');
+  window.addEventListener('mousemove', e => {
+    mX = e.clientX;
+    mY = e.clientY;
+    cursorEl.style.left = mX + 'px';
+    cursorEl.style.top  = mY + 'px';
+  });
+  window.addEventListener('mouseleave', () => { mX = mY = -9999; });
+
+  // Space bar also triggers navigate (presentation convenience)
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' && progress >= 0.95) {
+      e.preventDefault();
+      if (!navigating) { navigating = true; navigate(); }
+    }
+  });
+
+  loop();
+});
+</script>
+</body>
+</html>
